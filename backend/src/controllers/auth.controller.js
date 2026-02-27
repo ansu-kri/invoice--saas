@@ -1,15 +1,16 @@
-const User = require("../Model/user");
-const generateToken = require("../Configs/utils");
+const User = require("../models/User")
+const Organization = require("../models/Organization")
+const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcrypt");
 
 // ==================== SIGNUP ====================
-const signup = async (req, res) => {
+exports.register = async (req, res) => {
   try {
     // Extract fields from form data
-    const { fullName, email, password, role, gender, phone = "", bloodType = "" } = req.body;
+    const { name, email, password, organizationName } = req.body;
 
     // --- Validation ---
-    if (!fullName || !email || !password || !role || !gender) {
+    if (!name || !email || !password) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
@@ -25,38 +26,45 @@ const signup = async (req, res) => {
     // --- Check if user exists ---
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: "User already exists" });
     }
+
+    //Create Organization
+    const organization = await Organization.create({
+      name: organizationName,
+    })
 
     // --- Hash password ---
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // --- Create new user ---
-    const newUser = new User({
-      fullName,
+    // --- Create Admin user ---
+    const newUser = await User.create({
+      name,
       email,
       password: hashedPassword,
-      role,
-      gender,
-      phone,
-      bloodType,
-      profilePic: req.file ? req.file.path : undefined,
+      role: "admin",
+      organizationId: Organization._id
     });
 
-    const savedUser = await newUser.save();
+    //update organization owner
+    organization.ownerId = newUser._id;
+    await organization.save();
 
     // --- Generate JWT token ---
-    const token = generateToken(savedUser._id);
+    const token = generateToken(newUser._id);
 
     // --- Send response ---
     res.status(201).json({
-      _id: savedUser._id,
-      fullName: savedUser.fullName,
-      email: savedUser.email,
-      role: savedUser.role,
-      profilePic: savedUser.profilePic,
+      message: "Admin registered successfully",
       token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organizationId
+      }
     });
   } catch (error) {
     console.error("Error in signup:", error.message);
@@ -66,7 +74,7 @@ const signup = async (req, res) => {
 };
 
 // ==================== LOGIN ====================
-const login = async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: "All fields are required" });
@@ -80,12 +88,15 @@ const login = async (req, res) => {
     const token = generateToken(user._id);
 
     res.status(200).json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic,
-      role: user.role,
+      message: "Login successfu",
       token,
+      user:{
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      organizationId: user.organizationId
+      }
     });
   } catch (error) {
     console.error("Error in login:", error.message);
@@ -96,16 +107,14 @@ const login = async (req, res) => {
 
 // ================user logout=======================
 
-const logout  = async (req, res) =>  {
-    try{
-       return res.status(200).json({
+exports.logout = async (req, res) => {
+  try {
+    return res.status(200).json({
       success: true,
       message: "Logged out successfully",
     });
-    }
-    catch(error) {
-        res.status(500).json({ success: false, message: "error.message"});
-    }
+  }
+  catch (error) {
+    res.status(500).json({ success: false, message: "error.message" });
+  }
 }
-
-module.exports = { signup, login, logout };

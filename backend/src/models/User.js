@@ -1,40 +1,18 @@
-// const mongoose = require('mongoose');
-
-// const userSchema = new mongoose.Schema({
-//     fullName:{ type: String, require: true},
-//     email:{ type: String, require: true, unique: true},
-//     password:{ type: String, require: true},
-//       areYou: { 
-//         type: String, 
-//         required: true,
-//         enum: ["patient", "doctor"] 
-//     },
-
-//     gender: { 
-//         type: String, 
-//         required: true,
-//         enum: ["male", "female"]
-//     },
-// })
-
-// module.exports = mongoose.model("User", userSchema)
-
 const mongoose = require( "mongoose")
 
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true },
   password: { type: String, required: true },
-  fullName: { type: String, required: true },
-  phone: { type: Number },
-  profilePic: { type: String },
   role: {
     type: String,
-    enum: ["patient", "admin","doctors"],
-    default: "patient",
+    enum: ["admin","member"],
+    default: "member",
   },
-  gender: { type: String, enum: ["male", "female", "other"] },
-  bloodType: { type: String },
-  // appointments: [{ type: mongoose.Types.ObjectId, ref: "Appointment" }],
-});
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Organization",
+  }
+},{timestamps: true});
 
 module.exports = mongoose.model("User", UserSchema)   

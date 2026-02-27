@@ -1,9 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-
-// const authRoutes = require("./routes/auth.routes");
-// const invoiceRoutes = require("./routes/invoice.routes");
-// const userRoutes = require("./routes/user.routes");
+const authRoutes = require("./routes/auth.routes")
+const invoiceRoutes = require("./routes/invoice.routes");
+// const protect = require("./middleware/auth.middleware")
 
 const app = express();
 
@@ -17,16 +16,21 @@ app.use(
 
 // Body Parsers
 app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
 
 // Test Route
 app.get("/", (req, res) => {
   res.send("Invoice SaaS API Running...");
 });
 
+// app.get("/api/test-protected", protect, (req,res) => {
+//   res.json({ message: "Protected route working", user: req.user,
+
+//   })
+// })
+
 // Routes
-// app.use("/api/auth", authRoutes);
-// app.use("/api/invoices", invoiceRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/invoices", invoiceRoutes);
 // app.use("/api/users", userRoutes);
 
 module.exports = app;
