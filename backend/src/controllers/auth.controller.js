@@ -6,11 +6,9 @@ const bcrypt = require("bcrypt");
 // ==================== SIGNUP ====================
 exports.register = async (req, res) => {
   try {
-    // Extract fields from form data
     const { name, email, password, organizationName } = req.body;
 
-    // --- Validation ---
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !organizationName) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
@@ -23,52 +21,50 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // --- Check if user exists ---
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    //Create Organization
+    //  Create organization
     const organization = await Organization.create({
       name: organizationName,
-    })
+    });
 
-    // --- Hash password ---
+    //  Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // --- Create Admin user ---
+    //  Create admin user
     const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
       role: "admin",
-      organizationId: Organization._id
+      organizationId: organization._id   
     });
 
-    //update organization owner
+    //  Update organization owner
     organization.ownerId = newUser._id;
     await organization.save();
 
-    // --- Generate JWT token ---
+    //  Generate token
     const token = generateToken(newUser._id);
 
-    // --- Send response ---
     res.status(201).json({
       message: "Admin registered successfully",
       token,
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        organizationId: user.organizationId
+        _id: newUser._id,          
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        organizationId: newUser.organizationId
       }
     });
+
   } catch (error) {
-    console.error("Error in signup:", error.message);
-    console.error(error);
+    console.error("Error in signup:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };

@@ -3,6 +3,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/auth.routes")
 const invoiceRoutes = require("./routes/invoice.routes");
 // const protect = require("./middleware/auth.middleware")
+const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
 
@@ -32,5 +33,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoiceRoutes);
 // app.use("/api/users", userRoutes);
+
+app.use(errorHandler);
 
 module.exports = app;

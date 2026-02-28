@@ -4,7 +4,7 @@ const invoiceSchema = new mongoose.Schema({
     organizationId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Organization",
-        require: true,
+        required: true,
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -34,7 +34,15 @@ const invoiceSchema = new mongoose.Schema({
         enum: ["draft", "sent" , "paid"],
         default: "draft",
     },
+    isDeleted: {
+        type: Boolean,
+        default: false,
+    }
 }, {timestamps: true}
 );
+invoiceSchema.index({ organizationId: 1});
+invoiceSchema.index({ clientName: 1});
+invoiceSchema.index({ status: 1});
+
 
 module.exports = mongoose.model("Invoice", invoiceSchema)
