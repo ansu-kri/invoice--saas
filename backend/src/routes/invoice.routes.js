@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {protect} = require("../middleware/auth.middleware");
 const {createInvoice, getInvoice, updateInvoiceStatus, getDashboardsStats, deleteInvoice} = require("../controllers/invoice.controller");
+const { body } = require("express-validator");
 
 
 router.post("/", protect, [
