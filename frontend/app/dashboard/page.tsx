@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
     const fetchStats = async () => {
       try {
-        const data = await authFetch("/invoices/dashboard/stats");
+        const data = await authFetch("/api/invoices/dashboard/stats");
         setStats(data);
 
         const response = await getInvoices();
