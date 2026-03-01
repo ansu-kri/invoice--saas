@@ -35,17 +35,17 @@ export const authFetch = async (endpoint: string, options: RequestInit = {}) => 
 // Instead of writing this everywhere, we create a reusable fetch helper.
 
 export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/invoices?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
 }
 
 export const deleteInvoice = async (id: string) => {
-  return authFetch(`/invoices/${id}`, {
+  return authFetch(`/api/invoices/${id}`, {
     method: "DELETE",
   });
 };
 
 export const createInvoice = async (data: any) => {
-  return authFetch("/invoices",{
+  return authFetch("/api/invoices",{
     method:"POST",
     body: JSON.stringify(data),
   })
