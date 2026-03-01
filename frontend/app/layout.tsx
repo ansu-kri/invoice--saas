@@ -1,3 +1,6 @@
+import "../app/globals.css";
+import Navbar from "@/components/Navbar";
+
 export const metadata = {
   title: "Invoice SaaS",
   description: "Invoice Management Application",
@@ -16,6 +19,7 @@ export default function RootLayout({
           fontFamily: "Arial, sans-serif",
         }}
       >
+        <Navbar />
         {children}
       </body>
     </html>

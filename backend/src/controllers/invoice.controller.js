@@ -53,7 +53,7 @@ exports.getInvoice = async (req, res) => {
         res.status(200).json({
             total,
             page,
-            pages: Math.ceil(total / limit),
+            totalPages: Math.ceil(total / limit),
             invoices,
         });
     } catch (error) {

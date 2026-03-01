@@ -1,6 +1,6 @@
 "use client";
 
-import { authFetch } from "@/services/api";
+import { authFetch, getInvoices } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { FaDollarSign, FaCheckCircle, FaClock, FaPaperPlane, FaFileInvoice } from "react-icons/fa";
@@ -16,11 +16,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if(!token){
+    if (!token) {
       router.push("/login");
       return;
     }
-    
+
     if (hasFetched.current) return;
     hasFetched.current = true;
 
@@ -29,8 +29,8 @@ export default function DashboardPage() {
         const data = await authFetch("/invoices/dashboard/stats");
         setStats(data);
 
-        // const invoices = await authFetch("/invoices"); // Fetch recent invoices
-        // setRecentInvoices(invoices.slice(0, 10)); // show 10 latest
+        const response = await getInvoices();
+        setRecentInvoices(response.invoices.slice(0, 10));
       } catch (err) {
         console.error(err);
         setError("Failed to load dashboard data.");
