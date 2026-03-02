@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser } from "@/services/api";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,13 +15,18 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const data = await loginUser({ email, password });
+    try{
+      const data = await loginUser({ email, password });
 
     if (data.token) {
       localStorage.setItem("token", data.token);
+      toast.success("Login successfully!");
       router.push("/dashboard");
     } else {
-      alert("Login failed");
+      toast.error("Registration failed");
+    }
+    } catch(err: any) {
+      toast.error(err.message || "Something went wrong")
     }
   };
 
@@ -94,6 +101,29 @@ export default function LoginPage() {
             >
               Login
             </Button>
+
+             {/* Signup Section */}
+            <div className="pt-4">
+              <div className="relative flex items-center gap-3 py-2">
+                <div className="flex-1 bg-gray-700" />
+                <span className="text-gray-600 text-xs">or</span>
+                <div className="flex-1 bg-gray-700" />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between bg-gray-800/40 p-3 rounded-xl">
+                <p className="text-gray-400 text-sm">
+                  New to Compliance?
+                </p>
+                <Link
+                  href="/register"
+                  className="text-sm font-semibold text-violet-400 flex items-center gap-1 group"
+                >
+                  Create account
+                  <span className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </Link>
+              </div>
+            </div>
+            
           </form>
         </div>
       </div>

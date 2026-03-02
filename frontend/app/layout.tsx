@@ -1,5 +1,6 @@
 import "../app/globals.css";
 import Navbar from "@/components/Navbar";
+import { Toaster } from "sonner";
 
 export const metadata = {
   title: "Invoice SaaS",
@@ -20,6 +21,7 @@ export default function RootLayout({
         }}
       >
         <Navbar />
+        <Toaster position="top-right" richColors closeButton />
         {children}
       </body>
     </html>

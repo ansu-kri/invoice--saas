@@ -3,6 +3,7 @@
 import { createInvoice } from "@/services/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type InvoiceItem = {
   description: string;
@@ -33,12 +34,18 @@ export default function NewInvoicePage() {
   };
 
   const handleSubmit = async () => {
-    await createInvoice({
-      clientName,
-      clientEmail,
-      items,
-    });
-    router.push("/invoices");
+    try {
+      await createInvoice({
+        clientName,
+        clientEmail,
+        items,
+      });
+
+      toast.success("Invoice created successfully!");
+      router.push("/invoices");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create invoice");
+    }
   };
 
   return (
