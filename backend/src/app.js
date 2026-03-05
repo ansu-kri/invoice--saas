@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/auth.routes");
 const invoiceRoutes = require("./routes/invoice.routes");
+const userRoutes = require("./routes/user.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -39,6 +40,7 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api/user", userRoutes);
 
 // Error Middleware
 app.use(errorHandler);

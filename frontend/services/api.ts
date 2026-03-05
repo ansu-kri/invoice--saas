@@ -27,7 +27,7 @@ export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -74,3 +74,26 @@ export const createInvoice = async (data: any) => {
   })
 }
 
+
+export const createUser = async (data: {
+  name: string;
+  email: string;
+  password: string;
+  role?: "staff" | "admin";
+}, token: string) => {
+  const res = await fetch(`${API_URL}/user/users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to create user");
+  }
+
+  return res.json();
+};

@@ -26,6 +26,9 @@ export default function Navbar() {
         <div onClick={() => router.push("/dashboard")} className={linkClass("/dashboard")}>
           Dashboard
         </div>
+        <div onClick={() => router.push("/createuser")} className={linkClass("/createuser")}>
+          User
+        </div>
 
         <div onClick={() => router.push("/invoices")} className={linkClass("/invoices")}>
           Invoices
