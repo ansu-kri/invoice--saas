@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-// import { getUsers } from "@/services/api";
+import { deleteInvoice, getUsers } from "@/services/api";
 
 type User = {
   _id: string;
@@ -18,26 +18,31 @@ export default function UsersListPage() {
   const token = localStorage.getItem("token");
 
   // Fetch users from backend
-//   const fetchUsers = async () => {
-//     if (!token) {
-//       toast.error("Authentication token not found");
-//       return;
-//     }
+  const fetchUsers = async () => {
+    if (!token) {
+      toast.error("Authentication token not found");
+      return;
+    }
 
-//     try {
-//       setLoading(true);
-//       const data = await getUsers(token);
-//       setUsers(data.users);
-//     } catch (err: any) {
-//       toast.error(err.message || "Failed to load users");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+    try {
+      setLoading(true);
+      const data = await getUsers();
+      setUsers(data.users);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//   useEffect(() => {
-//     fetchUsers();
-//   }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    await deleteInvoice(id);
+    fetchUsers();
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 md:p-12">
@@ -55,6 +60,7 @@ export default function UsersListPage() {
                 <th className="py-2 px-4 border-b text-left">Name</th>
                 <th className="py-2 px-4 border-b text-left">Email</th>
                 <th className="py-2 px-4 border-b text-left">Role</th>
+                <th className="py-2 px-4 border-b text-left">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -63,6 +69,14 @@ export default function UsersListPage() {
                   <td className="py-2 px-4 border-b">{user.name}</td>
                   <td className="py-2 px-4 border-b">{user.email}</td>
                   <td className="py-2 px-4 border-b">{user.role}</td>
+                  <td className="py-2 px-4 border-b">
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

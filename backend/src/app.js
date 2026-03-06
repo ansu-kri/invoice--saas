@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoiceRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/users", userRoutes);
 
 // Error Middleware
 app.use(errorHandler);

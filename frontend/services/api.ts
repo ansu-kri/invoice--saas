@@ -58,7 +58,7 @@ export const authFetch = async (endpoint: string, options: RequestInit = {}) => 
 // Instead of writing this everywhere, we create a reusable fetch helper.
 
 export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/invoices?page=${page}&limit=4&search=${search}`);
 }
 
 export const deleteInvoice = async (id: string) => {
@@ -96,4 +96,35 @@ export const createUser = async (data: {
   }
 
   return res.json();
+};
+
+
+export const getUsers = async (page= 1, search = "") => {
+  return authFetch(`/users?page=${page}&limit=4&search=${search}`);
+}
+
+export const downloadInvoice = async (id: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No auth token found");
+
+  // Use the backend URL from environment variable
+  const response = await fetch(`${API_URL}/invoices/${id}/download`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to download invoice");
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `invoice-${id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 };

@@ -1,5 +1,6 @@
 const Invoice = require("../models/Invoice");
 const { validationResult } = require("express-validator")
+const PDFDocument = require("pdfkit")
 
 
 //==============CreateInvoice======================
@@ -8,7 +9,7 @@ exports.createInvoice = async (req, res) => {
         const { clientName, clientEmail, items } = req.body;
 
         const errors = validationResult(req);
-        if(!errors.isEmpty()){
+        if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
@@ -141,8 +142,8 @@ exports.getDashboardsStats = async (req, res) => {
 
 //==============Create Soft deleted =================
 exports.deleteInvoice = async (req, res) => {
-    try{
-        if(req.user.role !== "admin") {
+    try {
+        if (req.user.role !== "admin") {
             return res.status(403).json({ message: "Access denied" });
         }
         const invoice = await Invoice.findOneAndUpdate(
@@ -154,11 +155,58 @@ exports.deleteInvoice = async (req, res) => {
             { isDeleted: true },
             { new: true }
         );
-        if(!invoice) {
+        if (!invoice) {
             return res.status(404).json({ message: "Invoice not found" });
         }
         res.status(200).json({ message: "Invoice deleted successfully" });
-    } catch(error) {
-        res.status(500).json({ message: error.message})
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+//===== Create pdf invoice=================
+exports.downloadInvoice = async (req, res) => {
+    try {
+        const invoice = await Invoice.findOne({
+            _id: req.params.id,
+            organizationId: req.user.organizationId,
+            isDeleted: false,
+        });
+
+        if (!invoice) {
+            return res.status(404).json({ message: "Invoice not found" })
+        }
+
+        const doc = new PDFDocument();
+
+        res.setHeader("content-Type", "application/pdf");
+        res.setHeader(
+            "content-Disposition",
+            `attachment; filename=invoice-${invoice._id}.pdf`
+        );
+
+        doc.pipe(res);
+
+        doc.fontSize(20).text("Invoice", { align: "center" });
+        doc.moveDown();
+
+        doc.fontSize(14).text(`Client: ${invoice.clientName}`);
+        doc.text(`Email: ${invoice.clientEmail}`);
+        doc.text(`Status: ${invoice.status}`);
+        doc.moveDown();
+
+        invoice.items.forEach((item, index) => {
+            doc.text(
+                `${index + 1}. ${item.description} - ${item.quantity} x ${item.price}`
+            );
+        });
+
+        doc.moveDown();
+        doc.fontSize(16).text(`Total: ₹ ${invoice.totalAmount}`);
+
+        doc.end();
+
+    } catch (error) { 
+        res.status(500).json({ message: "PDF generation failed" })
     }
 }
