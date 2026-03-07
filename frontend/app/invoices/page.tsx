@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { getInvoices, deleteInvoice, downloadInvoice } from "@/services/api";
+import { handlePayment as processPayment } from "@/services/invoiceService";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
 
 type Invoice = {
   _id: string;
   clientName: string;
+  clientEmail?: string; // optional, for Razorpay prefill
   totalAmount: number;
   status: string;
 };
@@ -18,7 +20,9 @@ export default function InvoicesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(0);
+  const [loadingPayment, setLoadingPayment] = useState<string | null>(null); // track which invoice is paying
 
+  // Fetch invoices
   const fetchInvoices = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -40,6 +44,7 @@ export default function InvoicesPage() {
     fetchInvoices();
   }, [page, search]);
 
+  // Delete invoice
   const handleDelete = async (id: string) => {
     const confirmDelete = confirm("Are you sure you want to delete this invoice?");
     if (!confirmDelete) return;
@@ -54,6 +59,7 @@ export default function InvoicesPage() {
     }
   };
 
+  // Download invoice
   const handleDownload = async (id: string) => {
     try {
       await downloadInvoice(id);
@@ -64,12 +70,27 @@ export default function InvoicesPage() {
     }
   };
 
+  // Razorpay payment
+  const handlePayment = async (invoice: Invoice) => {
+    try {
+      setLoadingPayment(invoice._id);
+      await processPayment(invoice);
+      setLoadingPayment(null);
+      // Refresh invoices to reflect paid status
+      fetchInvoices();
+    } catch (err) {
+      console.error(err);
+      toast.error("Payment failed");
+      setLoadingPayment(null);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-8 bg-gray-100 min-h-screen">
       <Toaster position="top-right" richColors />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
         <h1 className="text-2xl font-bold">Invoices</h1>
-
         <input
           type="text"
           placeholder="Search client..."
@@ -108,13 +129,24 @@ export default function InvoicesPage() {
                     {inv.status}
                   </span>
                 </td>
-
                 <td className="px-4 sm:px-6 py-4 flex flex-wrap gap-2">
                   <button
                     onClick={() => handleDelete(inv._id)}
                     className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 cursor-pointer flex-1 sm:flex-none text-center"
                   >
                     Delete
+                  </button>
+
+                  <button
+                    onClick={() => handlePayment(inv)}
+                    disabled={loadingPayment === inv._id || inv.status === "paid"}
+                    className={`px-3 py-1 rounded-lg flex-1 sm:flex-none text-center ${
+                      inv.status === "paid"
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-green-500 text-white hover:bg-green-600"
+                    }`}
+                  >
+                    {loadingPayment === inv._id ? "Processing..." : "Pay Now"}
                   </button>
 
                   <button

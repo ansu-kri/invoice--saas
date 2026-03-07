@@ -1,6 +1,7 @@
 const Invoice = require("../models/Invoice");
 const { validationResult } = require("express-validator")
 const PDFDocument = require("pdfkit")
+const razorpay = require("../config/razorpay");
 
 
 //==============CreateInvoice======================
@@ -209,4 +210,35 @@ exports.downloadInvoice = async (req, res) => {
     } catch (error) { 
         res.status(500).json({ message: "PDF generation failed" })
     }
+}
+
+//========== Create Order API===================
+
+exports.createPaymentOrder = async (req, res) => {
+    const invoice = await Invoice.findOne({
+        _id: req.params.id,
+        organizationId: req.user.organizationId,
+    });
+
+    if(!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+    }
+    const options = {
+        amount: invoice.totalAmount * 100, //paise
+        currency: "INR",
+        receipt: invoice._id.toString(),
+    }
+    const order = await razorpay.orders.create(options);
+
+    res.json(order)
+}
+
+//=======Verify Payment API==============
+exports.verifyPayment = async (req, res) => {
+    const { invoiceId } = req.body;
+
+    await Invoice.findByIdAndUpdate(invoiceId, {
+        status: "paid",
+    });
+    res.json({ message: "Payment successful" })
 }
