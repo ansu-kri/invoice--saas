@@ -1,6 +1,13 @@
-# 🚀 Invoice SaaS – Multi-Tenant Cloud-Based Invoicing Platform
 
+<p align="center">
+  <img src="./assets/dashboard.png" alt="Doctor App Banner" width="100%" />
+</p>
+
+<h1 align="center">🚀 Invoice SaaS – Multi-Tenant Cloud-Based Invoicing Platform</h1>
+
+<p align="center">
 A full-stack SaaS application built with modern production-level architecture.
+</p>
 
 This project demonstrates real-world SaaS concepts including:
 
