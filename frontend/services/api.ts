@@ -88,7 +88,7 @@ export const createUser = async (data: {
   password: string;
   role?: "staff" | "admin";
 }, token: string) => {
-  const res = await fetch(`${API_URL}/api/user/users`, {
+  const res = await fetch(`${API_URL}/api/users/users`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
