@@ -15,10 +15,12 @@ export default function UsersListPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
+  // const token = localStorage.getItem("token");
 
   // Fetch users from backend
   const fetchUsers = async () => {
+    const token = localStorage.getItem("token");
+
     if (!token) {
       toast.error("Authentication token not found");
       return;

@@ -2,16 +2,22 @@
 
 import { createUser } from "@/services/api";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function CreateUserPage() {
   const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"admin" | "staff">("staff");
-  const token = localStorage.getItem("token"); 
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    setToken(storedToken);
+  }, []);
 
   const handleSubmit = async () => {
     if (!name || !email || !password) {
@@ -19,14 +25,19 @@ export default function CreateUserPage() {
       return;
     }
 
+    if (!token) {
+      toast.error("Authentication token not found");
+      return;
+    }
+
     try {
       await createUser(
         { name, email, password, role },
-        token! // ensure token exists
+        token
       );
 
       toast.success("User created successfully!");
-      router.push("/users"); // redirect to users list page
+      router.push("/users");
     } catch (err: any) {
       toast.error(err.message || "Failed to create user");
     }
@@ -45,7 +56,7 @@ export default function CreateUserPage() {
             placeholder="Enter full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300"
           />
         </div>
 
@@ -57,7 +68,7 @@ export default function CreateUserPage() {
             placeholder="Enter email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300"
           />
         </div>
 
@@ -69,7 +80,7 @@ export default function CreateUserPage() {
             placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300"
           />
         </div>
 
@@ -79,17 +90,16 @@ export default function CreateUserPage() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as "admin" | "staff")}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300"
           >
             <option value="staff">Staff</option>
           </select>
         </div>
 
-        {/* Submit */}
         <div className="flex justify-end">
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg"
           >
             Create User
           </button>
