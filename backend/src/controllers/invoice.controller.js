@@ -2,6 +2,7 @@ const Invoice = require("../models/Invoice");
 const { validationResult } = require("express-validator")
 const PDFDocument = require("pdfkit")
 const razorpay = require("../config/razorpay");
+const {sendInvoiceEmail} = require("../services/email.service");
 
 
 //==============CreateInvoice======================
@@ -234,11 +235,71 @@ exports.createPaymentOrder = async (req, res) => {
 }
 
 //=======Verify Payment API==============
-exports.verifyPayment = async (req, res) => {
-    const { invoiceId } = req.body;
+exports.verifyPayment = async (req,res)=>{
+  try{
 
-    await Invoice.findByIdAndUpdate(invoiceId, {
-        status: "paid",
+    const {invoiceId} = req.body;
+
+    await Invoice.findByIdAndUpdate(invoiceId,{
+      status:"paid"
     });
-    res.json({ message: "Payment successful" })
+
+    res.json({
+      message:"Payment verified",
+      status:"paid"
+    });
+
+  }catch(err){
+    res.status(500).json({
+      message:"Payment verification failed"
+    })
+  }
 }
+
+
+//================Send Invoice Email==========
+
+// exports.sendInvoiceToClient = async (req, res) => {
+//   try {
+//     const { invoiceId } = req.params;
+
+//     // Fetch the invoice
+//     const invoice = await Invoice.findById(invoiceId);
+//     if (!invoice) {
+//       return res.status(404).json({ message: "Invoice not found" });
+//     }
+
+//     // Prepare email HTML
+//     const invoiceHTML = `
+//       <h2>Invoice #${invoice.invoiceNumber}</h2>
+//       <p>Amount: ₹${invoice.totalAmount}</p>
+//       <p>Status: ${invoice.status}</p>
+//     `;
+
+//     // Send email
+//     await sendInvoiceEmail(invoice.clientEmail, `Your Invoice #${invoice.invoiceNumber}`, invoiceHTML);
+
+//     res.json({ message: "Invoice sent to the client successfully" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Failed to send invoice email" });
+//   }
+// };
+
+
+//==== invoice with PDF=========
+exports.sendInvoiceToClient = async (req, res) => {
+  try {
+    const { invoiceId } = req.params;
+    const invoice = await Invoice.findById(invoiceId);
+
+    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+
+    await sendInvoiceEmailWithPDF(invoice);
+
+    res.json({ message: "Invoice PDF sent to client successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to send invoice email" });
+  }
+};

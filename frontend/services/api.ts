@@ -1,5 +1,7 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+
+//================Resigner new Admin=================
 export const registerUser = async (data: {
   name: string;
   email: string;
@@ -23,11 +25,12 @@ export const registerUser = async (data: {
   return res.json();
 };
 
+//================login User and Admin=====================
 export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,6 +40,7 @@ export const loginUser = async ( data: {
   return res.json();
 }
 
+//==================authFetch==================================
 export const authFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem("token");
 
@@ -57,16 +61,19 @@ export const authFetch = async (endpoint: string, options: RequestInit = {}) => 
 
 // Instead of writing this everywhere, we create a reusable fetch helper.
 
+//============================getAllInvoice=============================
 export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/invoices?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
 }
 
+//====================DeleteInvoice by admin========================
 export const deleteInvoice = async (id: string) => {
   return authFetch(`/api/invoices/${id}`, {
     method: "DELETE",
   });
 };
 
+//===================Create Invoice======================
 export const createInvoice = async (data: any) => {
   return authFetch("/api/invoices",{
     method:"POST",
@@ -74,14 +81,14 @@ export const createInvoice = async (data: any) => {
   })
 }
 
-
+//====================Create User by admin=======================
 export const createUser = async (data: {
   name: string;
   email: string;
   password: string;
   role?: "staff" | "admin";
 }, token: string) => {
-  const res = await fetch(`${API_URL}/user/users`, {
+  const res = await fetch(`${API_URL}/api/user/users`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -98,17 +105,18 @@ export const createUser = async (data: {
   return res.json();
 };
 
-
+//=================Get all User=====================
 export const getUsers = async (page= 1, search = "") => {
-  return authFetch(`/users?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/api/users?page=${page}&limit=4&search=${search}`);
 }
 
+//======================Download invoice===========================
 export const downloadInvoice = async (id: string) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No auth token found");
 
   // Use the backend URL from environment variable
-  const response = await fetch(`${API_URL}/invoices/${id}/download`, {
+  const response = await fetch(`${API_URL}/api/invoices/${id}/download`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

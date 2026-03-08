@@ -37,7 +37,7 @@ const invoiceSchema = new mongoose.Schema({
     isDeleted: {
         type: Boolean,
         default: false,
-    }
+    },
 }, { timestamps: true }
 );
 invoiceSchema.index({ organizationId: 1 });

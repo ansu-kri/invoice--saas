@@ -40,47 +40,73 @@ export default function UsersListPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    await deleteInvoice(id);
-    fetchUsers();
+    try {
+      await deleteInvoice(id);
+      toast.success("User deleted successfully");
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete user");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">All Users</h1>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-12">
+      <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-4 sm:p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">
+          All Users
+        </h1>
 
         {loading ? (
-          <p>Loading users...</p>
+          <p className="text-gray-600">Loading users...</p>
         ) : users.length === 0 ? (
-          <p>No users found.</p>
+          <p className="text-gray-600">No users found.</p>
         ) : (
-          <table className="w-full border border-gray-300 rounded-lg">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-2 px-4 border-b text-left">Name</th>
-                <th className="py-2 px-4 border-b text-left">Email</th>
-                <th className="py-2 px-4 border-b text-left">Role</th>
-                <th className="py-2 px-4 border-b text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{user.name}</td>
-                  <td className="py-2 px-4 border-b">{user.email}</td>
-                  <td className="py-2 px-4 border-b">{user.role}</td>
-                  <td className="py-2 px-4 border-b">
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 rounded-lg">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-2 px-3 sm:px-4 border-b text-left text-sm sm:text-base">
+                    Name
+                  </th>
+                  <th className="py-2 px-3 sm:px-4 border-b text-left text-sm sm:text-base">
+                    Email
+                  </th>
+                  <th className="py-2 px-3 sm:px-4 border-b text-left text-sm sm:text-base">
+                    Role
+                  </th>
+                  <th className="py-2 px-3 sm:px-4 border-b text-left text-sm sm:text-base">
+                    Action
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr
+                    key={user._id}
+                    className="hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <td className="py-2 px-3 sm:px-4 border-b text-sm sm:text-base">
+                      {user.name}
+                    </td>
+                    <td className="py-2 px-3 sm:px-4 border-b text-sm sm:text-base break-all">
+                      {user.email}
+                    </td>
+                    <td className="py-2 px-3 sm:px-4 border-b text-sm sm:text-base">
+                      {user.role}
+                    </td>
+                    <td className="py-2 px-3 sm:px-4 border-b">
+                      <button
+                        onClick={() => handleDelete(user._id)}
+                        className="px-3 py-1 text-sm sm:text-base bg-red-500 text-white rounded-lg hover:bg-red-600 w-full sm:w-auto"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

@@ -44,7 +44,7 @@ export default function DashboardPage() {
 
   if (loading)
     return (
-      <div className="p-4 md:p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <p className="text-center animate-pulse">Loading Dashboard...</p>
       </div>
     );
@@ -52,11 +52,11 @@ export default function DashboardPage() {
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Invoice Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Invoice Dashboard</h1>
 
       {/* Summary Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
         <StatCard title="Total Revenue" value={`$${stats.totalRevenue}`} icon={<FaDollarSign />} color="text-blue-600" />
         <StatCard title="Paid Revenue" value={`$${stats.paidRevenue}`} icon={<FaCheckCircle />} color="text-green-600" />
         <StatCard title="Outstanding" value={`$${stats.totalRevenue - stats.paidRevenue}`} icon={<FaClock />} color="text-yellow-500" />
@@ -67,33 +67,33 @@ export default function DashboardPage() {
 
       {/* Recent Invoices Table */}
       <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-        <table className="min-w-full table-auto">
+        <table className="min-w-full table-auto border-collapse border border-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left text-gray-600">Invoice ID</th>
-              <th className="px-4 py-2 text-left text-gray-600">Client</th>
-              <th className="px-4 py-2 text-left text-gray-600">Amount</th>
-              <th className="px-4 py-2 text-left text-gray-600">Status</th>
-              <th className="px-4 py-2 text-left text-gray-600">Created At</th>
-              <th className="px-4 py-2 text-left text-gray-600">Due Date</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Invoice ID</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Client</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Amount</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Status</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Created At</th>
+              <th className="px-3 py-2 text-left text-gray-600 text-sm sm:text-base">Due Date</th>
             </tr>
           </thead>
           <tbody>
             {recentInvoices.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-4 text-gray-500">
+                <td colSpan={6} className="text-center py-4 text-gray-500 text-sm">
                   No invoices found
                 </td>
               </tr>
             ) : (
               recentInvoices.map((inv) => (
-                <tr key={inv._id} className="border-b hover:bg-gray-50 transition">
-                  <td className="px-4 py-2">{inv._id.slice(-6)}</td>
-                  <td className="px-4 py-2">{inv.clientName}</td>
-                  <td className="px-4 py-2">${inv.totalAmount}</td>
-                  <td className={`px-4 py-2 font-semibold ${statusColor(inv.status)}`}>{inv.status}</td>
-                  <td className="px-4 py-2">{new Date(inv.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-2">{new Date(inv.dueDate || inv.createdAt).toLocaleDateString()}</td>
+                <tr key={inv._id} className="border-b hover:bg-gray-50 transition text-sm sm:text-base">
+                  <td className="px-3 py-2">{inv._id.slice(-6)}</td>
+                  <td className="px-3 py-2">{inv.clientName}</td>
+                  <td className="px-3 py-2">${inv.totalAmount}</td>
+                  <td className={`px-3 py-2 font-semibold ${statusColor(inv.status)}`}>{inv.status}</td>
+                  <td className="px-3 py-2">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                  <td className="px-3 py-2">{new Date(inv.dueDate || inv.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))
             )}
@@ -121,10 +121,10 @@ function statusColor(status: string) {
 // Stat Card
 function StatCard({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) {
   return (
-    <div className="bg-white shadow-md rounded-lg p-5 flex flex-col items-center hover:shadow-xl transition-shadow">
-      <div className={`mb-2 ${color}`}>{icon}</div>
-      <h2 className="text-lg font-semibold mb-2">{title}</h2>
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+    <div className="bg-white shadow-md rounded-lg p-4 sm:p-5 flex flex-col items-center hover:shadow-xl transition-shadow w-full">
+      <div className={`mb-2 text-xl sm:text-2xl ${color}`}>{icon}</div>
+      <h2 className="text-base sm:text-lg font-semibold mb-1 text-center">{title}</h2>
+      <p className={`text-lg sm:text-2xl font-bold ${color}`}>{value}</p>
     </div>
   );
 }

@@ -35,12 +35,7 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async () => {
     try {
-      await createInvoice({
-        clientName,
-        clientEmail,
-        items,
-      });
-
+      await createInvoice({ clientName, clientEmail, items });
       toast.success("Invoice created successfully!");
       router.push("/invoices");
     } catch (err: any) {
@@ -49,12 +44,14 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 md:p-12">
-      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Create Invoice</h1>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-12">
+      <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 sm:p-8 md:p-12">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">
+          Create Invoice
+        </h1>
 
         {/* Client Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
           <div className="flex flex-col">
             <label className="mb-2 text-gray-600 font-medium">Client Name</label>
             <input
@@ -62,7 +59,7 @@ export default function NewInvoicePage() {
               placeholder="Enter client name"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex flex-col">
@@ -72,7 +69,7 @@ export default function NewInvoicePage() {
               placeholder="Enter client email"
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -83,16 +80,18 @@ export default function NewInvoicePage() {
           {items.map((item, index) => (
             <div
               key={index}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200"
+              className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200"
             >
-              <div className="flex flex-col col-span-2">
+              <div className="flex flex-col sm:col-span-2">
                 <label className="mb-1 text-gray-600">Description</label>
                 <input
                   type="text"
                   placeholder="Item description"
                   value={item.description}
-                  onChange={(e) => handleChange(index, "description", e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(e) =>
+                    handleChange(index, "description", e.target.value)
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
               <div className="flex flex-col">
@@ -102,8 +101,10 @@ export default function NewInvoicePage() {
                   min={1}
                   placeholder="Qty"
                   value={item.quantity}
-                  onChange={(e) => handleChange(index, "quantity", Number(e.target.value))}
-                  className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(e) =>
+                    handleChange(index, "quantity", Number(e.target.value))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
               <div className="flex flex-col">
@@ -113,26 +114,29 @@ export default function NewInvoicePage() {
                   min={0}
                   placeholder="Price"
                   value={item.price}
-                  onChange={(e) => handleChange(index, "price", Number(e.target.value))}
-                  className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(e) =>
+                    handleChange(index, "price", Number(e.target.value))
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
             </div>
           ))}
         </div>
 
+        {/* Add Item Button */}
         <button
           onClick={handleAddItem}
-          className="mt-4 px-6 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition"
+          className="mt-4 w-full sm:w-auto px-6 py-2 bg-blue-100 text-blue-700 font-semibold rounded-lg hover:bg-blue-200 transition"
         >
           + Add Item
         </button>
 
         {/* Submit */}
-        <div className="mt-8 flex justify-end">
+        <div className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3">
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+            className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
           >
             Create Invoice
           </button>
