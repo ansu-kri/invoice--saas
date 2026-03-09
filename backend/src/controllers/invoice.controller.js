@@ -295,7 +295,7 @@ exports.sendInvoiceToClient = async (req, res) => {
 
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
-    await sendInvoiceEmailWithPDF(invoice);
+    await sendInvoiceEmail(invoice);
 
     res.json({ message: "Invoice PDF sent to client successfully" });
   } catch (err) {

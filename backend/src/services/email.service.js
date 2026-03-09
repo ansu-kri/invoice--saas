@@ -45,16 +45,16 @@ exports.sendInvoiceEmail = async (invoice) => {
         await transporter.sendMail({
           from: process.env.EMAIL_USER,
           to: invoice.clientEmail,
-          subject: `Invoice #${invoice.invoiceNumber}`,
+          subject: `Invoice #${invoice._id.toString().slice(-6)}`,
           html: `
-            <h2>Invoice #${invoice.invoiceNumber}</h2>
+            <h2>Invoice #${invoice._id.toString().slice(-6)}</h2>
             <p>Amount: ₹${invoice.totalAmount}</p>
             <p>Status: ${invoice.status}</p>
             <p>Please find the attached invoice PDF.</p>
           `,
           attachments: [
             {
-              filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+              filename: `Invoice-${invoice._id.toString().slice(-6)}.pdf`,
               content: pdfData,
               contentType: "application/pdf",
             },
@@ -65,12 +65,34 @@ exports.sendInvoiceEmail = async (invoice) => {
       });
 
       //  PDF content
-      doc.fontSize(20).text(`Invoice #${invoice.invoiceNumber}`, { align: "center" });
+      // doc.fontSize(20).text(`Invoice #${invoice._id.toString().slice(-6)}`, { align: "center" });
+      // doc.moveDown();
+      // doc.fontSize(14).text(`Client: ${invoice.clientName}`);
+      // doc.text(`Email: ${invoice.clientEmail}`);
+      // doc.text(`Amount: ₹${invoice.totalAmount}`);
+      // doc.text(`Status: ${invoice.status}`);
+      // doc.end();
+
+      const invoiceId = invoice._id.toString().slice(-6);
+      doc.fontSize(26).fillColor("#333").text("INVOICE", { align: "center" });
       doc.moveDown();
-      doc.fontSize(14).text(`Client: ${invoice.clientName}`);
-      doc.text(`Email: ${invoice.clientEmail}`);
-      doc.text(`Amount: ₹${invoice.totalAmount}`);
-      doc.text(`Status: ${invoice.status}`);
+      doc.fontSize(12).fillColor("#555").text(`Invoice ID: ${invoiceId}`);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`);
+      doc.moveDown();
+      doc.fontSize(16).fillColor("#000").text("Bill To:");
+      doc.fontSize(12).text(invoice.clientName);
+      doc.text(invoice.clientEmail);
+      doc.moveDown();
+      doc.fontSize(16).text("Invoice Details");
+      doc.moveDown(0.5);
+      doc.fontSize(12)
+        .text(`Amount: ₹${invoice.totalAmount}`)
+        .text(`Status: ${invoice.status}`);
+      doc.moveDown(2);
+      doc.fontSize(10).fillColor("gray").text(
+        "Thank you for your business!",
+        { align: "center" }
+      );
       doc.end();
     } catch (err) {
       reject(err);

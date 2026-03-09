@@ -37,7 +37,7 @@ export default function CreateUserPage() {
       );
 
       toast.success("User created successfully!");
-      router.push("/users");
+      router.push("/user");
     } catch (err: any) {
       toast.error(err.message || "Failed to create user");
     }

@@ -30,7 +30,7 @@ export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export const authFetch = async (endpoint: string, options: RequestInit = {}) => 
 
 //============================getAllInvoice=============================
 export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/invoices?page=${page}&limit=4&search=${search}`);
 }
 
 //====================DeleteInvoice by admin========================
@@ -135,4 +135,24 @@ export const downloadInvoice = async (id: string) => {
   a.click();
   a.remove();
   window.URL.revokeObjectURL(url);
+};
+
+//====================sendInvoiceWithPDf======================
+export const sendInvoiceToClientWithPdf = async (id: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("No auth token found");
+
+  const response = await fetch(`${API_URL}/invoices/${id}/send-email`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to send invoice email");
+  }
+
+  return response.json();
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getInvoices, deleteInvoice, downloadInvoice } from "@/services/api";
+import { getInvoices, deleteInvoice, downloadInvoice, sendInvoiceToClientWithPdf } from "@/services/api";
 import { handlePayment as processPayment } from "@/services/invoiceService";
 import { useRouter } from "next/navigation";
 import { Toaster, toast } from "sonner";
@@ -77,13 +77,9 @@ export default function InvoicesPage() {
   const handlePayment = async (invoice: Invoice) => {
     try {
       setLoadingPayment(invoice._id);
-
       await processPayment(invoice);
-
       toast.success("Payment successful");
-
       setLoadingPayment(null);
-
       fetchInvoices(); // refresh invoices
     } catch (err) {
       console.error(err);
@@ -92,52 +88,69 @@ export default function InvoicesPage() {
     }
   };
 
+  // Send invoice to client email
+  const handleSendEmail = async (invoice: Invoice) => {
+    try {
+      if (!invoice.clientEmail) {
+        toast.error("Client email not available");
+        return;
+      }
+      await sendInvoiceToClientWithPdf(invoice._id);
+      toast.success("Invoice sent to client successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send invoice email");
+    }
+  };
+
   return (
-    <div className="p-4 sm:p-8 bg-gray-100 min-h-screen">
-      <Toaster position="top-right" richColors />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold">Invoices</h1>
-
-        <input
-          type="text"
-          placeholder="Search client..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow overflow-x-auto">
-        <table className="min-w-full text-left table-auto">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="px-6 py-3">Client</th>
-              <th className="px-6 py-3">Amount</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Action</th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">
+                Client
+              </th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">
+                Status
+              </th>
+              <th className="px-6 py-3 text-sm font-semibold text-gray-600">
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {invoices.map((inv) => (
-              <tr key={inv._id} className="border-b hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium">{inv.clientName}</td>
+              <tr key={inv._id} className="border-b hover:bg-gray-50 transition">
+                {/* Client */}
+                <td className="px-6 py-4">
+                  <div className="font-semibold text-gray-800">
+                    {inv.clientName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {inv.clientEmail || "No Email"}
+                  </div>
+                </td>
 
-                <td className="px-6 py-4">₹ {inv.totalAmount}</td>
+                {/* Amount */}
+                <td className="px-6 py-4 font-medium">
+                  ₹ {inv.totalAmount}
+                </td>
 
                 {/* Status */}
                 <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${
-                      inv.status === "paid"
+                    className={`px-3 py-1 text-xs rounded-full font-semibold capitalize ${inv.status === "paid"
                         ? "bg-green-100 text-green-700"
                         : inv.status === "overdue"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
                   >
                     {inv.status}
                   </span>
@@ -145,68 +158,49 @@ export default function InvoicesPage() {
 
                 {/* Actions */}
                 <td className="px-6 py-4 flex flex-wrap gap-2">
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(inv._id)}
-                    className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
 
-                  {/* Pay button only if not paid */}
+                  {/* Pay */}
                   {inv.status !== "paid" && (
                     <button
                       onClick={() => handlePayment(inv)}
                       disabled={loadingPayment === inv._id}
-                      className={`px-3 py-1 rounded-lg ${
-                        inv.status === "overdue"
-                          ? "bg-red-500 text-white hover:bg-red-600"
-                          : "bg-green-500 text-white hover:bg-green-600"
-                      }`}
+                      className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
                     >
                       {loadingPayment === inv._id
                         ? "Processing..."
-                        : inv.status === "overdue"
-                        ? "Pay Overdue"
-                        : "Pay Now"}
+                        : "Pay"}
                     </button>
                   )}
 
                   {/* Download */}
                   <button
                     onClick={() => handleDownload(inv._id)}
-                    className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
                     Download
                   </button>
+
+                  {/* Send Email */}
+                  <button
+                    onClick={() => handleSendEmail(inv)} 
+                    className="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                  >
+                    Send Email
+                  </button>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => handleDelete(inv._id)}
+                    className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center items-center gap-4 mt-6">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        <span className="font-medium">
-          Page {page} of {totalPages}
-        </span>
-
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50"
-        >
-          Next
-        </button>
       </div>
     </div>
   );
