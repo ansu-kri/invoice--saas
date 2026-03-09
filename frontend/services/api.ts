@@ -30,7 +30,7 @@ export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export const authFetch = async (endpoint: string, options: RequestInit = {}) => 
 
 //============================getAllInvoice=============================
 export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/invoices?page=${page}&limit=4&search=${search}`);
+  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
 }
 
 //====================DeleteInvoice by admin========================
@@ -142,7 +142,7 @@ export const sendInvoiceToClientWithPdf = async (id: string) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No auth token found");
 
-  const response = await fetch(`${API_URL}/invoices/${id}/send-email`, {
+  const response = await fetch(`${API_URL}/api/invoices/${id}/send-email`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
