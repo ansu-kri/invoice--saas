@@ -106,6 +106,9 @@ export default function InvoicesPage() {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       <div className="overflow-x-auto">
+        <input type="text" placeholder="Search client..." value={search} 
+        onChange={(e) => setSearch(e.target.value)} 
+        className="px-4 py-2 ml-5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64" />
         <table className="min-w-full text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -146,10 +149,10 @@ export default function InvoicesPage() {
                 <td className="px-6 py-4">
                   <span
                     className={`px-3 py-1 text-xs rounded-full font-semibold capitalize ${inv.status === "paid"
-                        ? "bg-green-100 text-green-700"
-                        : inv.status === "overdue"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
+                      ? "bg-green-100 text-green-700"
+                      : inv.status === "overdue"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
                       }`}
                   >
                     {inv.status}
@@ -182,7 +185,7 @@ export default function InvoicesPage() {
 
                   {/* Send Email */}
                   <button
-                    onClick={() => handleSendEmail(inv)} 
+                    onClick={() => handleSendEmail(inv)}
                     className="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700"
                   >
                     Send Email
@@ -201,6 +204,18 @@ export default function InvoicesPage() {
             ))}
           </tbody>
         </table>
+        {/* Pagination */}
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50" >
+            Prev
+          </button>
+          <span className="font-medium">
+            Page {page} of {totalPages}
+          </span>
+          <button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50" >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
