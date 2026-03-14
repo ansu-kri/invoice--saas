@@ -1,103 +1,89 @@
-// const nodemailer = require("nodemailer");
+// ================= Invoice Email with PDF =================
 
-// exports.sendInvoiceEmail = async (to, subject, html) => {
-//   const transporter = nodemailer.createTransport({
-//     service: "gmail",
-//     auth: {
-//       user: process.env.EMAIL_USER,
-//       pass: process.env.EMAIL_PASS, // 16-char App Password
-//     },
-//   });
-
-//   await transporter.sendMail({
-//     from: process.env.EMAIL_USER,
-//     to,
-//     subject,
-//     html, // HTML for invoices
-//   });
-// };
-
-
-//==============invoice with PDF==========================
 const PDFDocument = require("pdfkit");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-exports.sendInvoiceEmail = async (invoice) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument();
-      const buffers = [];
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", async () => {
-        try {
-          const pdfData = Buffer.concat(buffers);
+const sendInvoiceEmail = async (invoice) => {
+  try {
+    const doc = new PDFDocument();
+    const buffers = [];
 
-          const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-            family: 4, // force IPv4 (important)
-            auth: {
-              user: process.env.EMAIL_USER,
-              pass: process.env.EMAIL_PASS,
+    // Collect PDF data
+    doc.on("data",buffers.push.bind(buffers));
+
+    doc.on("end", async () => {
+      try {
+        const pdfData = Buffer.concat(buffers);
+        const invoiceId = invoice._id.toString().slice(-6);
+
+        const response = await resend.emails.send({
+          from: "Invoice SaaS <onboarding@resend.dev>",
+          to: "ansusharma1952@gmail.com",
+          subject: `Invoice #${invoiceId}`,
+          html: `
+            <h2>Invoice #${invoiceId}</h2>
+            <p><strong>Client:</strong> ${invoice.clientName}</p>
+            <p><strong>Amount:</strong> ₹${invoice.totalAmount}</p>
+            <p><strong>Status:</strong> ${invoice.status}</p>
+            <p>Please find the attached invoice PDF.</p>
+          `,
+          attachments: [
+            {
+              filename: `Invoice-${invoiceId}.pdf`,
+              content: pdfData.toString("base64"),
+              encoding: "base64",
             },
-            tls: {
-              rejectUnauthorized: false,
-            },
-          });
+          ],
+        });
 
-          await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: invoice.clientEmail,
-            subject: `Invoice #${invoice._id.toString().slice(-6)}`,
-            html: `
-              <h2>Invoice #${invoice._id.toString().slice(-6)}</h2>
-              <p>Amount: ₹${invoice.totalAmount}</p>
-              <p>Status: ${invoice.status}</p>
-              <p>Please find the attached invoice PDF.</p>
-            `,
-            attachments: [
-              {
-                filename: `Invoice-${invoice._id.toString().slice(-6)}.pdf`,
-                content: pdfData,
-                contentType: "application/pdf",
-              },
-            ],
-          });
+        console.log("Invoice email sent successfully");
+      } catch (emailError) {
+        console.error("Email sending error:", emailError);
+      }
+    });
 
-          resolve();
-        } catch (error) {
-          console.error("Email sending error:", error);
-          reject(error);
-        }
-      });
+    // ===== Generate Invoice PDF =====
 
-      const invoiceId = invoice._id.toString().slice(-6);
+    const invoiceId = invoice._id.toString().slice(-6);
 
-      doc.fontSize(26).fillColor("#333").text("INVOICE", { align: "center" });
-      doc.moveDown();
-      doc.fontSize(12).fillColor("#555").text(`Invoice ID: ${invoiceId}`);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`);
-      doc.moveDown();
-      doc.fontSize(16).fillColor("#000").text("Bill To:");
-      doc.fontSize(12).text(invoice.clientName);
-      doc.text(invoice.clientEmail);
-      doc.moveDown();
-      doc.fontSize(16).text("Invoice Details");
-      doc.moveDown(0.5);
-      doc.fontSize(12)
-        .text(`Amount: ₹${invoice.totalAmount}`)
-        .text(`Status: ${invoice.status}`);
-      doc.moveDown(2);
-      doc.fontSize(10).fillColor("gray").text(
-        "Thank you for your business!",
-        { align: "center" }
-      );
+    doc.fontSize(26).fillColor("#333").text("INVOICE", { align: "center" });
 
-      doc.end();
-    } catch (err) {
-      reject(err);
-    }
-  });
+    doc.moveDown();
+
+    doc.fontSize(12)
+      .fillColor("#555")
+      .text(`Invoice ID: ${invoiceId}`)
+      .text(`Date: ${new Date().toLocaleDateString()}`);
+
+    doc.moveDown();
+
+    doc.fontSize(16).fillColor("#000").text("Bill To:");
+    doc.fontSize(12)
+      .text(invoice.clientName)
+      .text(invoice.clientEmail);
+
+    doc.moveDown();
+
+    doc.fontSize(16).text("Invoice Details");
+    doc.moveDown(0.5);
+
+    doc.fontSize(12)
+      .text(`Amount: ₹${invoice.totalAmount}`)
+      .text(`Status: ${invoice.status}`);
+
+    doc.moveDown(2);
+
+    doc.fontSize(10)
+      .fillColor("gray")
+      .text("Thank you for your business!", { align: "center" });
+
+    doc.end();
+
+  } catch (error) {
+    console.error("Invoice email error:", error);
+  }
 };
+
+module.exports = { sendInvoiceEmail };

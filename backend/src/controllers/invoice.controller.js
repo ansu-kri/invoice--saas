@@ -291,15 +291,26 @@ exports.verifyPayment = async (req,res)=>{
 exports.sendInvoiceToClient = async (req, res) => {
   try {
     const { invoiceId } = req.params;
+
     const invoice = await Invoice.findById(invoiceId);
 
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+    if (!invoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
 
     await sendInvoiceEmail(invoice);
 
-    res.json({ message: "Invoice PDF sent to client successfully" });
+    res.json({
+      success: true,
+      message: "Invoice PDF sent to client successfully",
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to send invoice email" });
+    console.error("Send invoice error:", err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to send invoice email",
+    });
   }
 };
