@@ -18,7 +18,7 @@ const sendInvoiceEmail = async (invoice) => {
         const pdfData = Buffer.concat(buffers);
         const invoiceId = invoice._id.toString().slice(-6);
 
-        const response = await resend.emails.send({
+        await resend.emails.send({
           from: "Invoice SaaS <onboarding@resend.dev>",
           to: "ansusharma1952@gmail.com",
           subject: `Invoice #${invoiceId}`,
