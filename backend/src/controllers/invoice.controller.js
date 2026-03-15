@@ -17,6 +17,10 @@ exports.createInvoice = async (req, res) => {
 
         const totalAmount = items.reduce((acc, item) => acc + item.quantity * item.price, 0);
 
+        //set duedate automatically
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate()+1)
+
         //creating the invoice
         const invoice = await Invoice.create({
             //we do not take organizationId from body, we take req.user.organizationId ,,,because this prevent tenant data leakage.
@@ -27,6 +31,7 @@ exports.createInvoice = async (req, res) => {
             clientEmail,
             items,
             totalAmount,
+            dueDate,
         })
         res.status(201).json(invoice)
     } catch (error) {
@@ -312,5 +317,44 @@ exports.sendInvoiceToClient = async (req, res) => {
       success: false,
       message: "Failed to send invoice email",
     });
+  }
+};
+
+//=============automatic send email==========
+exports.reminderService = async (req, res) => {
+  try {
+    const today = new Date();
+
+    const invoices = await Invoice.find({
+      status: { $in: ["Pending", "Overdue"] },
+      dueDate: { $lte: today },
+    });
+
+    if (!invoices.length) {
+      return res.json({ message: "No pending or overdue invoices" });
+    }
+
+    for (let invoice of invoices) {
+      // Avoid sending multiple reminders in one day
+      const lastSent = invoice.lastReminderSent;
+      if (!lastSent || lastSent.toDateString() !== today.toDateString()) {
+        await sendInvoiceEmail(invoice);
+        invoice.lastReminderSent = today;
+      }
+
+      if (invoice.status === "Pending") {
+        invoice.status = "Overdue";
+      }
+
+      await invoice.save();
+    }
+
+    res.json({
+      message: "Reminder emails sent successfully",
+      total: invoices.length,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

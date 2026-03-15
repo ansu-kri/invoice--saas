@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginUser } from "@/services/api";
+import { loginUser } from "@/services/authServices";
 import Link from "next/link";
 import { toast } from "sonner";
 
