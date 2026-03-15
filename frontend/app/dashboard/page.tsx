@@ -60,7 +60,7 @@ export default function DashboardPage() {
         <StatCard title="Total Revenue" value={`$${stats.totalRevenue}`} icon={<FaDollarSign />} color="text-blue-600" />
         <StatCard title="Paid Revenue" value={`$${stats.paidRevenue}`} icon={<FaCheckCircle />} color="text-green-600" />
         <StatCard title="Outstanding" value={`$${stats.totalRevenue - stats.paidRevenue}`} icon={<FaClock />} color="text-yellow-500" />
-        <StatCard title="Drafts" value={stats.draftCount} icon={<FaFileInvoice />} color="text-gray-500" />
+        <StatCard title="Pending" value={stats.draftCount} icon={<FaFileInvoice />} color="text-gray-500" />
         <StatCard title="Sent" value={stats.sentCount} icon={<FaPaperPlane />} color="text-purple-500" />
         <StatCard title="Paid" value={stats.paidCount} icon={<FaCheckCircle />} color="text-teal-500" />
       </div>

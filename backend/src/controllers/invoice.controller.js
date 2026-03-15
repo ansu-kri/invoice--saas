@@ -123,7 +123,7 @@ exports.getDashboardsStats = async (req, res) => {
                     },
                     draftCount: {
                         $sum: {
-                            $cond: [{ $eq: ["$status", "draft"] }, 1, 0],
+                            $cond: [{ $eq: ["$status", "Pending"] }, 1, 0],
                         },
                     },
                     sentCount: {
