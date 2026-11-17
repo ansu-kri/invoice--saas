@@ -123,11 +123,31 @@ export default function DashboardPage() {
         return;
       }
       const query = new URLSearchParams({ from: dates.from, to: dates.to });
-      const result = await authFetch<DashboardStats>(`/invoices/dashboard/stats?${query}`);
-      setStats(result);
+      const result = await authFetch<Partial<DashboardStats>>(
+        `/invoices/dashboard/stats?${query}`,
+      );
+      setStats({
+        ...result,
+        revenueTrend: Array.isArray(result.revenueTrend)
+          ? result.revenueTrend
+          : [],
+        recentInvoices: Array.isArray(result.recentInvoices)
+          ? result.recentInvoices
+          : [],
+        paymentAlerts: {
+          overdueCount: result.paymentAlerts?.overdueCount ?? 0,
+          upcomingInvoices: Array.isArray(
+            result.paymentAlerts?.upcomingInvoices,
+          )
+            ? result.paymentAlerts.upcomingInvoices
+            : [],
+        },
+      } as DashboardStats);
     } catch (requestError) {
       const message =
-        requestError instanceof Error ? requestError.message : "Could not load dashboard.";
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not load dashboard.";
       setError(message);
       toast.error(message);
     } finally {
@@ -139,15 +159,53 @@ export default function DashboardPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const maxTrend = Math.max(...(stats?.revenueTrend.map((point) => point.amount) || [0]), 1);
+  const maxTrend = Math.max(
+    ...(stats?.revenueTrend.map((point) => point.amount) || [0]),
+    1,
+  );
   const summaryCards = [
-    { title: "Total invoiced", value: currency(stats?.totalRevenue || 0), icon: LuFileText, tone: "violet" },
-    { title: "Paid revenue", value: currency(stats?.paidRevenue || 0), icon: LuCheck, tone: "green" },
-    { title: "Outstanding", value: currency(stats?.outstandingAmount || 0), icon: LuClock3, tone: "amber" },
-    { title: "Total invoices", value: String(stats?.totalInvoices || 0), icon: LuArrowUpRight, tone: "blue" },
-    { title: "Paid invoices", value: String(stats?.paidCount || 0), icon: LuCheck, tone: "green" },
-    { title: "Pending invoices", value: String(stats?.pendingCount || 0), icon: LuClock3, tone: "amber" },
-    { title: "Overdue invoices", value: String(stats?.overdueCount || 0), icon: LuTriangleAlert, tone: "red" },
+    {
+      title: "Total invoiced",
+      value: currency(stats?.totalRevenue || 0),
+      icon: LuFileText,
+      tone: "violet",
+    },
+    {
+      title: "Paid revenue",
+      value: currency(stats?.paidRevenue || 0),
+      icon: LuCheck,
+      tone: "green",
+    },
+    {
+      title: "Outstanding",
+      value: currency(stats?.outstandingAmount || 0),
+      icon: LuClock3,
+      tone: "amber",
+    },
+    {
+      title: "Total invoices",
+      value: String(stats?.totalInvoices || 0),
+      icon: LuArrowUpRight,
+      tone: "blue",
+    },
+    {
+      title: "Paid invoices",
+      value: String(stats?.paidCount || 0),
+      icon: LuCheck,
+      tone: "green",
+    },
+    {
+      title: "Pending invoices",
+      value: String(stats?.pendingCount || 0),
+      icon: LuClock3,
+      tone: "amber",
+    },
+    {
+      title: "Overdue invoices",
+      value: String(stats?.overdueCount || 0),
+      icon: LuTriangleAlert,
+      tone: "red",
+    },
   ];
 
   const statusCounts = [
@@ -178,7 +236,11 @@ export default function DashboardPage() {
               key={option.value}
               type="button"
               onClick={() => setRange(option.value)}
-              className={range === option.value ? "range-tab range-tab-active" : "range-tab"}
+              className={
+                range === option.value
+                  ? "range-tab range-tab-active"
+                  : "range-tab"
+              }
             >
               {option.label}
             </button>
@@ -216,7 +278,9 @@ export default function DashboardPage() {
             <strong>We couldn&apos;t load your dashboard</strong>
             <p>{error}</p>
           </div>
-          <button type="button" onClick={() => void loadDashboard()}>Try again</button>
+          <button type="button" onClick={() => void loadDashboard()}>
+            Try again
+          </button>
         </section>
       ) : (
         <>
@@ -225,7 +289,9 @@ export default function DashboardPage() {
               <article className="metric-card" key={title}>
                 <div className="metric-card-top">
                   <span>{title}</span>
-                  <span className={`metric-icon metric-icon-${tone}`}><Icon aria-hidden="true" /></span>
+                  <span className={`metric-icon metric-icon-${tone}`}>
+                    <Icon aria-hidden="true" />
+                  </span>
                 </div>
                 {loading ? (
                   <div className="metric-skeleton" />
@@ -233,11 +299,15 @@ export default function DashboardPage() {
                   <strong className="metric-value">{value}</strong>
                 )}
                 <span className="metric-footnote">
-                  {title === "Total invoiced" ? "Invoices issued in this period" :
-                    title === "Paid revenue" ? "Payments recorded in this period" :
-                      title === "Outstanding" ? "Not yet marked as paid" :
-                        title === "Total invoices" ? "Created in this period" :
-                          `${title.replace(" invoices", "")} in this period`}
+                  {title === "Total invoiced"
+                    ? "Invoices issued in this period"
+                    : title === "Paid revenue"
+                      ? "Payments recorded in this period"
+                      : title === "Outstanding"
+                        ? "Not yet marked as paid"
+                        : title === "Total invoices"
+                          ? "Created in this period"
+                          : `${title.replace(" invoices", "")} in this period`}
                 </span>
               </article>
             ))}
@@ -248,21 +318,37 @@ export default function DashboardPage() {
               <div className="panel-heading">
                 <div>
                   <h2>Revenue overview</h2>
-                  <p>Paid invoice amounts by {range === "7d" ? "day" : "month"}</p>
+                  <p>
+                    Paid invoice amounts by {range === "7d" ? "day" : "month"}
+                  </p>
                 </div>
-                <span className="panel-period">{dates.from} – {dates.to}</span>
+                <span className="panel-period">
+                  {dates.from} – {dates.to}
+                </span>
               </div>
               {loading ? (
                 <div className="chart-skeleton" />
               ) : stats?.revenueTrend.length ? (
-                <div className="revenue-chart" role="img" aria-label="Paid revenue trend">
+                <div
+                  className="revenue-chart"
+                  role="img"
+                  aria-label="Paid revenue trend"
+                >
                   {stats.revenueTrend.map((point) => (
-                    <div className="chart-column" key={point.date} title={`${point.date}: ${currency(point.amount)}`}>
-                      <span className="chart-amount">{currency(point.amount)}</span>
+                    <div
+                      className="chart-column"
+                      key={point.date}
+                      title={`${point.date}: ${currency(point.amount)}`}
+                    >
+                      <span className="chart-amount">
+                        {currency(point.amount)}
+                      </span>
                       <div className="chart-bar-track">
                         <div
                           className="chart-bar"
-                          style={{ height: `${Math.max((point.amount / maxTrend) * 100, 4)}%` }}
+                          style={{
+                            height: `${Math.max((point.amount / maxTrend) * 100, 4)}%`,
+                          }}
                         />
                       </div>
                       <span className="chart-label">{point.date}</span>
@@ -273,7 +359,9 @@ export default function DashboardPage() {
                 <div className="dashboard-empty">
                   <LuArrowDownRight />
                   <strong>No paid revenue in this period</strong>
-                  <span>Revenue will appear here as payments are recorded.</span>
+                  <span>
+                    Revenue will appear here as payments are recorded.
+                  </span>
                 </div>
               )}
             </section>
@@ -295,7 +383,9 @@ export default function DashboardPage() {
                     return (
                       <div className="status-row" key={status.label}>
                         <div className="status-row-label">
-                          <span className={`status-dot status-dot-${status.tone}`} />
+                          <span
+                            className={`status-dot status-dot-${status.tone}`}
+                          />
                           <span>{status.label}</span>
                           <strong>{status.value}</strong>
                         </div>
@@ -316,29 +406,66 @@ export default function DashboardPage() {
           {(stats?.paymentAlerts.overdueCount || 0) > 0 && (
             <Link href="/invoices?status=overdue" className="overdue-banner">
               <LuTriangleAlert aria-hidden="true" />
-              <span><strong>{stats?.paymentAlerts.overdueCount} overdue invoice{stats?.paymentAlerts.overdueCount === 1 ? "" : "s"}</strong> need your attention.</span>
-              <span className="overdue-link">Review invoices <LuArrowUpRight /></span>
+              <span>
+                <strong>
+                  {stats?.paymentAlerts.overdueCount} overdue invoice
+                  {stats?.paymentAlerts.overdueCount === 1 ? "" : "s"}
+                </strong>{" "}
+                need your attention.
+              </span>
+              <span className="overdue-link">
+                Review invoices <LuArrowUpRight />
+              </span>
             </Link>
           )}
 
           <section className="dashboard-panel upcoming-panel">
             <div className="panel-heading">
-              <div><h2>Due in the next 7 days</h2><p>Upcoming customer payments</p></div>
-              <Link href="/invoices" className="panel-link">View invoices <LuArrowUpRight /></Link>
+              <div>
+                <h2>Due in the next 7 days</h2>
+                <p>Upcoming customer payments</p>
+              </div>
+              <Link href="/invoices" className="panel-link">
+                View invoices <LuArrowUpRight />
+              </Link>
             </div>
-            {loading ? <div className="status-skeleton" /> : stats?.paymentAlerts.upcomingInvoices.length ? (
+            {loading ? (
+              <div className="status-skeleton" />
+            ) : stats?.paymentAlerts.upcomingInvoices.length ? (
               <div className="upcoming-list">
                 {stats.paymentAlerts.upcomingInvoices.map((invoice) => (
-                  <Link href={`/invoices/${invoice._id}`} className="upcoming-row" key={invoice._id}>
-                    <span className="upcoming-avatar">{invoice.clientName.slice(0, 1).toUpperCase()}</span>
-                    <span className="upcoming-customer"><strong>{invoice.clientName}</strong><small>Due {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "soon"}</small></span>
-                    <span className="upcoming-amount">{currency(invoice.totalAmount)}</span>
-                    <span className={statusClass(invoice)}>{getInvoiceDisplayStatus(invoice.status, invoice.dueDate)}</span>
+                  <Link
+                    href={`/invoices/${invoice._id}`}
+                    className="upcoming-row"
+                    key={invoice._id}
+                  >
+                    <span className="upcoming-avatar">
+                      {invoice.clientName.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="upcoming-customer">
+                      <strong>{invoice.clientName}</strong>
+                      <small>
+                        Due{" "}
+                        {invoice.dueDate
+                          ? new Date(invoice.dueDate).toLocaleDateString()
+                          : "soon"}
+                      </small>
+                    </span>
+                    <span className="upcoming-amount">
+                      {currency(invoice.totalAmount)}
+                    </span>
+                    <span className={statusClass(invoice)}>
+                      {getInvoiceDisplayStatus(invoice.status, invoice.dueDate)}
+                    </span>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="dashboard-empty upcoming-empty"><LuClock3 /><strong>No upcoming payments</strong><span>Unpaid invoices due within 7 days will appear here.</span></div>
+              <div className="dashboard-empty upcoming-empty">
+                <LuClock3 />
+                <strong>No upcoming payments</strong>
+                <span>Unpaid invoices due within 7 days will appear here.</span>
+              </div>
             )}
           </section>
 
@@ -348,7 +475,9 @@ export default function DashboardPage() {
                 <h2>Recent invoices</h2>
                 <p>Your latest activity</p>
               </div>
-              <Link href="/invoices" className="panel-link">View all invoices <LuArrowUpRight /></Link>
+              <Link href="/invoices" className="panel-link">
+                View all invoices <LuArrowUpRight />
+              </Link>
             </div>
             <div className="recent-table-wrap">
               <table className="recent-table">
@@ -365,25 +494,52 @@ export default function DashboardPage() {
                 <tbody>
                   {loading ? (
                     [1, 2, 3].map((row) => (
-                      <tr key={row}><td colSpan={6}><div className="table-skeleton" /></td></tr>
+                      <tr key={row}>
+                        <td colSpan={6}>
+                          <div className="table-skeleton" />
+                        </td>
+                      </tr>
                     ))
                   ) : stats?.recentInvoices.length ? (
                     stats.recentInvoices.map((invoice) => (
                       <tr key={invoice._id}>
-                        <td><span className="invoice-number">INV-{invoice._id.slice(-6).toUpperCase()}</span></td>
+                        <td>
+                          <span className="invoice-number">
+                            INV-{invoice._id.slice(-6).toUpperCase()}
+                          </span>
+                        </td>
                         <td className="customer-cell">{invoice.clientName}</td>
-                        <td>{new Date(invoice.createdAt).toLocaleDateString()}</td>
-                        <td>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "—"}</td>
-                        <td><span className={statusClass(invoice)}>{getInvoiceDisplayStatus(invoice.status, invoice.dueDate)}</span></td>
-                        <td className="align-right amount-cell">{currency(invoice.totalAmount)}</td>
+                        <td>
+                          {new Date(invoice.createdAt).toLocaleDateString()}
+                        </td>
+                        <td>
+                          {invoice.dueDate
+                            ? new Date(invoice.dueDate).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td>
+                          <span className={statusClass(invoice)}>
+                            {getInvoiceDisplayStatus(
+                              invoice.status,
+                              invoice.dueDate,
+                            )}
+                          </span>
+                        </td>
+                        <td className="align-right amount-cell">
+                          {currency(invoice.totalAmount)}
+                        </td>
                       </tr>
                     ))
                   ) : (
-                    <tr><td className="table-empty" colSpan={6}>
-                      <LuFileText />
-                      <strong>No invoices yet</strong>
-                      <span>Create your first invoice to see activity here.</span>
-                    </td></tr>
+                    <tr>
+                      <td className="table-empty" colSpan={6}>
+                        <LuFileText />
+                        <strong>No invoices yet</strong>
+                        <span>
+                          Create your first invoice to see activity here.
+                        </span>
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
