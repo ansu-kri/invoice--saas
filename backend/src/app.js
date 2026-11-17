@@ -3,6 +3,12 @@ const cors = require("cors");
 const authRoutes = require("./routes/auth.routes");
 const invoiceRoutes = require("./routes/invoice.routes");
 const userRoutes = require("./routes/user.routes");
+const paymentRoutes = require("./routes/payment.routes");
+const reportRoutes = require("./routes/report.routes");
+const customerRoutes = require("./routes/customer.routes");
+const organizationRoutes = require("./routes/organization.routes");
+const expenseRoutes = require("./routes/expense.routes");
+const notificationRoutes = require("./routes/notification.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -41,6 +47,12 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/organizations", organizationRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Error Middleware
 app.use(errorHandler);

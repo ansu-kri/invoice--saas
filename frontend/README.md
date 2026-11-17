@@ -51,7 +51,13 @@ npm run dev
 - Secure Login / Register
 - Role-Based UI
 - Protected Routes
-- Invoice CRUD
+- Invoice CRUD, filters, status updates, PDF downloads, and email delivery
+- Organization-scoped customer directory and invoice history
+- Verified Razorpay payment history
+- Organization-scoped expense management and CSV export
+- Persisted invoice/payment notification center
+- Date-filtered dashboard and invoice analytics
+- Business profile, password, and organization contact settings
 - Multi-Tenant Data Isolation
 - Clean Dashboard UI
 
@@ -62,3 +68,5 @@ npm run dev
 Frontend deployed on Vercel  
 Backend deployed via Docker  
 Database: MongoDB Atlas
+
+The frontend expects `NEXT_PUBLIC_API_URL` to include the backend `/api` prefix (for example `http://localhost:5000/api`). Razorpay checkout additionally requires `NEXT_PUBLIC_RAZORPAY_KEY`; payment verification remains server-side.

@@ -7,7 +7,7 @@ export const reminderService = async () => {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("No auth token found");
 
-    const response = await fetch(`${API_URL}/api/invoices/reminder-service`, {
+    const response = await fetch(`${API_URL}/invoices/reminder-service`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

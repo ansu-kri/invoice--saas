@@ -1,5 +1,18 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
 
+async function postAuth(endpoint: string, data: object) {
+  if (!API_URL) throw new Error("NEXT_PUBLIC_API_URL is not configured.");
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.message || `Request failed (${response.status})`);
+  }
+  return payload;
+}
 
 //================Resigner new Admin=================
 export const registerUser = async (data: {
@@ -8,21 +21,7 @@ export const registerUser = async (data: {
   password: string;
   organizationName: string;
 }) => {
-  const res = await fetch(`${API_URL}/api/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  // Check if response is OK
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "Failed to register");
-  }
-
-  return res.json();
+  return postAuth("/auth/register", data);
 };
 
 //================login User and Admin=====================
@@ -30,12 +29,5 @@ export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
+  return postAuth("/auth/login", data);
+};

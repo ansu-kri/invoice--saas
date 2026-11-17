@@ -1,89 +1,72 @@
-// ================= Invoice Email with PDF =================
-
 const PDFDocument = require("pdfkit");
 const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const escapeHtml = (value = "") =>
+    String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+    })[character]);
+
+const createInvoicePdf = (invoice) => new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const chunks = [];
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    doc.fontSize(22).fillColor("#28324a").text("INVOICE", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(11).fillColor("#4b5568")
+        .text(`Invoice: ${invoice._id.toString().slice(-6).toUpperCase()}`)
+        .text(`Issued: ${new Date(invoice.createdAt || Date.now()).toLocaleDateString()}`)
+        .text(`Due: ${new Date(invoice.dueDate).toLocaleDateString()}`);
+    doc.moveDown();
+    doc.fontSize(14).fillColor("#222").text("Bill to");
+    doc.fontSize(11).text(invoice.clientName);
+    if (invoice.clientEmail) doc.text(invoice.clientEmail);
+    doc.moveDown();
+    invoice.items.forEach((item, index) => {
+        doc.text(`${index + 1}. ${item.description} - ${item.quantity} x INR ${item.price}`);
+    });
+    doc.moveDown();
+    doc.fontSize(15).fillColor("#222").text(`Total: ₹${invoice.totalAmount}`);
+    doc.fontSize(11).text(`Status: ${invoice.status}`);
+    doc.end();
+});
 
 const sendInvoiceEmail = async (invoice) => {
-  try {
-    const doc = new PDFDocument();
-    const buffers = [];
+    if (!invoice.clientEmail) {
+        throw new Error("The invoice does not have a client email address.");
+    }
+    if (!process.env.RESEND_API_KEY) {
+        throw new Error("Email delivery is not configured.");
+    }
 
-    // Collect PDF data
-    doc.on("data",buffers.push.bind(buffers));
-
-    doc.on("end", async () => {
-      try {
-        const pdfData = Buffer.concat(buffers);
-        const invoiceId = invoice._id.toString().slice(-6);
-
-        await resend.emails.send({
-          from: "Invoice SaaS <onboarding@resend.dev>",
-          to: "ansusharma1952@gmail.com",
-          subject: `Invoice #${invoiceId}`,
-          html: `
-            <h2>Invoice #${invoiceId}</h2>
-            <p><strong>Client:</strong> ${invoice.clientName}</p>
-            <p><strong>Amount:</strong> ₹${invoice.totalAmount}</p>
-            <p><strong>Status:</strong> ${invoice.status}</p>
-            <p>Please find the attached invoice PDF.</p>
-          `,
-          attachments: [
-            {
-              filename: `Invoice-${invoiceId}.pdf`,
-              content: pdfData.toString("base64"),
-              encoding: "base64",
-            },
-          ],
-        });
-
-        console.log("Invoice email sent successfully");
-      } catch (emailError) {
-        console.error("Email sending error:", emailError);
-      }
+    const invoiceId = invoice._id.toString().slice(-6).toUpperCase();
+    const pdf = await createInvoicePdf(invoice);
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "Invoice SaaS <onboarding@resend.dev>",
+        to: invoice.clientEmail,
+        subject: `Invoice ${invoiceId}`,
+        html: `
+            <h2>Invoice ${escapeHtml(invoiceId)}</h2>
+            <p><strong>Client:</strong> ${escapeHtml(invoice.clientName)}</p>
+            <p><strong>Amount:</strong> INR ${escapeHtml(invoice.totalAmount)}</p>
+            <p><strong>Status:</strong> ${escapeHtml(invoice.status)}</p>
+            <p>Please find your invoice attached.</p>
+        `,
+        attachments: [{
+            filename: `Invoice-${invoiceId}.pdf`,
+            content: pdf.toString("base64"),
+        }],
     });
-
-    // ===== Generate Invoice PDF =====
-
-    const invoiceId = invoice._id.toString().slice(-6);
-
-    doc.fontSize(26).fillColor("#333").text("INVOICE", { align: "center" });
-
-    doc.moveDown();
-
-    doc.fontSize(12)
-      .fillColor("#555")
-      .text(`Invoice ID: ${invoiceId}`)
-      .text(`Date: ${new Date().toLocaleDateString()}`);
-
-    doc.moveDown();
-
-    doc.fontSize(16).fillColor("#000").text("Bill To:");
-    doc.fontSize(12)
-      .text(invoice.clientName)
-      .text(invoice.clientEmail);
-
-    doc.moveDown();
-
-    doc.fontSize(16).text("Invoice Details");
-    doc.moveDown(0.5);
-
-    doc.fontSize(12)
-      .text(`Amount: ₹${invoice.totalAmount}`)
-      .text(`Status: ${invoice.status}`);
-
-    doc.moveDown(2);
-
-    doc.fontSize(10)
-      .fillColor("gray")
-      .text("Thank you for your business!", { align: "center" });
-
-    doc.end();
-
-  } catch (error) {
-    console.error("Invoice email error:", error);
-  }
+    if (error) {
+        throw new Error(error.message || "Email provider rejected the invoice.");
+    }
 };
 
 module.exports = { sendInvoiceEmail };

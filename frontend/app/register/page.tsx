@@ -22,13 +22,15 @@ export default function RegisterPage() {
 
             if (data.token) {
                 localStorage.setItem("token", data.token);
+                if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+                window.dispatchEvent(new Event("invoice-auth-change"));
                 toast.success("Registered successfully!");
                 router.push("/dashboard");
             } else {
                 toast.error("Registration failed");
             }
-        } catch (err: any) {
-            toast.error(err.message || "Something went wrong");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Something went wrong");
         }
     };
 

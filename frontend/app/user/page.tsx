@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { deleteInvoice, getUsers } from "@/services/api";
+import { deleteUser, getUsers } from "@/services/api";
 
 type User = {
   _id: string;
@@ -30,8 +30,8 @@ export default function UsersListPage() {
       setLoading(true);
       const data = await getUsers();
       setUsers(data.users);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load users");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -43,11 +43,11 @@ export default function UsersListPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteInvoice(id);
+      await deleteUser(id);
       toast.success("User deleted successfully");
       fetchUsers();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete user");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user");
     }
   };
 

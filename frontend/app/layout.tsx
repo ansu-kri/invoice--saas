@@ -15,21 +15,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "Arial, sans-serif" }}>
-        {/* Navbar */}
-        <Navbar />
+      <body>
+        <Navbar>{children}</Navbar>
 
-        {/* Toaster */}
         <Toaster position="top-right" richColors closeButton />
 
-        {/* Razorpay Script */}
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="lazyOnload"
         />
-
-        {/* Page content */}
-        {children}
       </body>
     </html>
   );

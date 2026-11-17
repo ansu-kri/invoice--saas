@@ -1,120 +1,241 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
 
-
-//==================authFetch==================================
-export const authFetch = async (endpoint: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    }
-  });
-  return res.json();
-}
-
-// But every protected API (invoices, dashboard, etc.) needs:
-
-// Authorization: Bearer TOKEN
-
-// Instead of writing this everywhere, we create a reusable fetch helper.
-
-//============================getAllInvoice=============================
-export const getInvoices = async (page= 1, search = "") => {
-  return authFetch(`/api/invoices?page=${page}&limit=4&search=${search}`);
-}
-
-//====================DeleteInvoice by admin========================
-export const deleteInvoice = async (id: string) => {
-  return authFetch(`/api/invoices/${id}`, {
-    method: "DELETE",
-  });
-};
-
-//===================Create Invoice======================
-export const createInvoice = async (data: any) => {
-  return authFetch("/api/invoices",{
-    method:"POST",
-    body: JSON.stringify(data),
-  })
-}
-
-//====================Create User by admin=======================
-export const createUser = async (data: {
+type UserInput = {
   name: string;
   email: string;
   password: string;
   role?: "staff" | "admin";
-}, token: string) => {
-  const res = await fetch(`${API_URL}/api/users/users`, {
+};
+
+export type InvoiceRecord = {
+  _id: string;
+  clientName: string;
+  clientEmail?: string;
+  totalAmount: number;
+  status: string;
+  dueDate?: string;
+  createdAt: string;
+};
+
+type UserRecord = {
+  _id: string;
+  name: string;
+  email: string;
+  role: "admin" | "staff";
+};
+
+export type CustomerRecord = {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  createdAt?: string;
+  invoiceStats?: { invoiceCount: number; totalBilled: number; totalPaid: number };
+};
+
+export type ExpenseRecord = {
+  _id: string;
+  description: string;
+  category: string;
+  vendor?: string;
+  amount: number;
+  date: string;
+};
+
+export type NotificationRecord = {
+  _id: string;
+  type: "invoice" | "payment" | "system";
+  title: string;
+  message: string;
+  href?: string;
+  readAt?: string | null;
+  createdAt: string;
+};
+
+async function parseResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : null;
+  if (!response.ok) {
+    throw new Error(payload?.message || `Request failed (${response.status})`);
+  }
+  return payload as T;
+}
+
+function apiUrl(endpoint: string) {
+  if (!API_URL) {
+    throw new Error("NEXT_PUBLIC_API_URL is not configured.");
+  }
+  return `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+}
+
+export const authFetch = async <T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Your session has expired. Please sign in again.");
+
+  const headers = new Headers(options.headers);
+  if (!headers.has("Content-Type") && options.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  headers.set("Authorization", `Bearer ${token}`);
+
+  const response = await fetch(apiUrl(endpoint), { ...options, headers });
+  return parseResponse<T>(response);
+};
+
+export const getInvoices = async (
+  page = 1,
+  search = "",
+  filters: { status?: string; from?: string; to?: string; sort?: string; direction?: string } = {},
+) => {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: "10",
+    search,
+  });
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  return authFetch<{
+    total: number;
+    page: number;
+    totalPages: number;
+    invoices: InvoiceRecord[];
+  }>(`/invoices?${query}`);
+};
+
+export const deleteInvoice = async (id: string) =>
+  authFetch(`/invoices/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+export const createInvoice = async (data: {
+  clientName: string;
+  clientEmail?: string;
+  items: { description: string; quantity: number; price: number }[];
+}) =>
+  authFetch<InvoiceRecord>("/invoices", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "Failed to create user");
-  }
-
-  return res.json();
+export const createUser = async (data: UserInput, token: string) => {
+  const headers = new Headers({ "Content-Type": "application/json" });
+  headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(apiUrl("/users/users"), {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+  return parseResponse(response);
 };
 
-//=================Get all User=====================
-export const getUsers = async (page= 1, search = "") => {
-  return authFetch(`/api/users?page=${page}&limit=4&search=${search}`);
-}
+export const getUsers = async (page = 1, search = "") => {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: "10",
+    search,
+  });
+  return authFetch<{
+    total: number;
+    page: number;
+    totalPages: number;
+    users: UserRecord[];
+  }>(`/users?${query}`);
+};
 
-//======================Download invoice===========================
-export const downloadInvoice = async (id: string) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No auth token found");
+export const deleteUser = async (id: string) =>
+  authFetch(`/users/${encodeURIComponent(id)}`, { method: "DELETE" });
 
-  // Use the backend URL from environment variable
-  const response = await fetch(`${API_URL}/api/invoices/${id}/download`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export const getCustomers = async (page = 1, search = "") => {
+  const query = new URLSearchParams({ page: String(page), limit: "10", search });
+  return authFetch<{
+    total: number;
+    page: number;
+    totalPages: number;
+    customers: CustomerRecord[];
+  }>(`/customers?${query}`);
+};
+
+export const saveCustomer = async (
+  customer: Partial<CustomerRecord> & { name: string },
+  id?: string,
+) =>
+  authFetch<CustomerRecord>(id ? `/customers/${encodeURIComponent(id)}` : "/customers", {
+    method: id ? "PATCH" : "POST",
+    body: JSON.stringify(customer),
   });
 
+export const deleteCustomer = async (id: string) =>
+  authFetch(`/customers/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+export const getExpenses = async (page = 1, search = "") => {
+  const query = new URLSearchParams({ page: String(page), limit: "10", search });
+  return authFetch<{
+    total: number;
+    page: number;
+    totalPages: number;
+    expenses: ExpenseRecord[];
+    summary: { totalAmount: number; count: number };
+  }>(`/expenses?${query}`);
+};
+
+export const saveExpense = async (
+  expense: Omit<ExpenseRecord, "_id">,
+  id?: string,
+) =>
+  authFetch<ExpenseRecord>(id ? `/expenses/${encodeURIComponent(id)}` : "/expenses", {
+    method: id ? "PATCH" : "POST",
+    body: JSON.stringify(expense),
+  });
+
+export const deleteExpense = async (id: string) =>
+  authFetch(`/expenses/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+export const getNotifications = async (page = 1) =>
+  authFetch<{
+    total: number;
+    unreadCount: number;
+    page: number;
+    totalPages: number;
+    notifications: NotificationRecord[];
+  }>(`/notifications?page=${page}&limit=20`);
+
+export const markNotificationRead = async (id: string) =>
+  authFetch<NotificationRecord>(`/notifications/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+  });
+
+export const markAllNotificationsRead = async () =>
+  authFetch<{ updated: number }>("/notifications/read-all", { method: "PATCH" });
+
+export const downloadInvoice = async (id: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Your session has expired. Please sign in again.");
+
+  const response = await fetch(apiUrl(`/invoices/${encodeURIComponent(id)}/download`), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok) {
-    throw new Error("Failed to download invoice");
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.message || "Failed to download invoice.");
   }
 
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `invoice-${id}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `invoice-${id}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
   window.URL.revokeObjectURL(url);
 };
 
-//====================sendInvoiceWithPDf======================
-export const sendInvoiceToClientWithPdf = async (id: string) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("No auth token found");
-
-  const response = await fetch(`${API_URL}/api/invoices/${id}/send-email`, {
+export const sendInvoiceToClientWithPdf = async (id: string) =>
+  authFetch(`/invoices/${encodeURIComponent(id)}/send-email`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to send invoice email");
-  }
-
-  return response.json();
-};
-

@@ -1,62 +1,83 @@
-import axios from "axios";
+import { authFetch } from "@/services/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+type PayableInvoice = {
+  _id: string;
+  clientName: string;
+  clientEmail?: string;
+  totalAmount: number;
+};
 
-export const handlePayment = async (invoice: any) => {
-    try {
-        const token = localStorage.getItem("token");
-        //  Create Razorpay order from backend
-        const { data } = await axios.post(
-            `${API_URL}/api/invoices/${invoice._id}/create-order`, {},
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+type RazorpaySuccess = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
 
-        const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
-            amount: data.amount,
-            currency: data.currency,
-            order_id: data.id,
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  order_id: string;
+  name: string;
+  description: string;
+  prefill: { name: string; email?: string };
+  theme: { color: string };
+  modal: { ondismiss: () => void };
+  handler: (response: RazorpaySuccess) => Promise<void>;
+};
 
-            name: "Your Company",
-            description: `Invoice Payment - ${invoice.invoiceNumber}`,
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => {
+      open: () => void;
+      on: (event: string, callback: (response: { error?: { description?: string } }) => void) => void;
+    };
+  }
+}
 
-            handler: async function (response: any) {
-                // Verify payment
-                await axios.post(`${API_URL}/api/invoices/verify-payment`, {
-                    invoiceId: invoice._id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_signature: response.razorpay_signature,
-                },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        }
-                    }
-                );
+export const handlePayment = async (invoice: PayableInvoice): Promise<void> => {
+  const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY;
+  if (!key) throw new Error("Razorpay is not configured for this application.");
+  if (!window.Razorpay) throw new Error("The secure payment window is not available. Please try again.");
 
-                alert("Payment Successful");
-            },
+  const order = await authFetch<{ id: string; amount: number; currency: string }>(
+    `/invoices/${encodeURIComponent(invoice._id)}/create-order`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
 
-            prefill: {
-                name: invoice.clientName || "Customer",
-                email: invoice.clientEmail || "customer@email.com",
-                contact: invoice.clientPhone || "9999999999",
-            },
+  await new Promise<void>((resolve, reject) => {
+    const checkout = new window.Razorpay!({
+      key,
+      amount: order.amount,
+      currency: order.currency,
+      order_id: order.id,
+      name: "Invoice SaaS",
+      description: `Invoice payment for ${invoice.clientName}`,
+      prefill: {
+        name: invoice.clientName,
+        ...(invoice.clientEmail ? { email: invoice.clientEmail } : {}),
+      },
+      theme: { color: "#5546e8" },
+      modal: { ondismiss: () => reject(new Error("Payment window was closed.")) },
+      handler: async (response) => {
+        try {
+          const result = await authFetch<{ status: string }>("/invoices/verify-payment", {
+            method: "POST",
+            body: JSON.stringify({ invoiceId: invoice._id, ...response }),
+          });
+          if (result.status.toLowerCase() !== "paid") {
+            throw new Error("The payment could not be verified.");
+          }
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      },
+    });
 
-            theme: {
-                color: "#6366F1",
-            },
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-    } catch (error) {
-        console.error("Payment failed", error);
-    }
+    checkout.on("payment.failed", (response) => {
+      reject(new Error(response.error?.description || "Payment was not completed."));
+    });
+    checkout.open();
+  });
 };

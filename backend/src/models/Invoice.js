@@ -14,6 +14,11 @@ const invoiceSchema = new mongoose.Schema(
         required: true,
     },
 
+    customerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+    },
+
     clientName: {
         type: String,
         required: true,
@@ -38,7 +43,7 @@ const invoiceSchema = new mongoose.Schema(
 
     status: {
         type: String,
-        enum: ["Pending", "Paid", "Overdue"],
+        enum: ["Draft", "Pending", "Sent", "Paid", "Overdue"],
         default: "Pending",
     },
 
@@ -53,6 +58,10 @@ const invoiceSchema = new mongoose.Schema(
 
     paidAt: {
         type: Date,
+    },
+
+    razorpayOrderId: {
+        type: String,
     },
 
     isDeleted: {

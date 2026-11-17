@@ -22,6 +22,7 @@ Backend service for Multi-Tenant Invoice SaaS application.
 - JWT-based authentication
 - Organization-based data isolation
 - REST API structure
+- Organization-scoped customers, invoices, verified payments, and reporting
 
 ---
 
@@ -50,6 +51,22 @@ server.js
 
 ---
 
+## API modules
+
+All API routes are prefixed with `/api`.
+
+- `/auth` - register and sign in
+- `/invoices` - invoice CRUD, filtered listing, dashboard aggregates, PDF, email, and Razorpay order/verification
+- `/customers` - organization-scoped customer records and invoice history
+- `/payments` - captured Razorpay payment history and date-filtered totals
+- `/reports/invoices` - invoice status, monthly, and customer revenue aggregates
+- `/users` - profile, password, and admin-managed team members
+- `/organizations/current` - organization business contact details (admin updates)
+- `/expenses` - organization-scoped expense records and totals
+- `/notifications` - persisted organization notifications and read state
+
+Payment status is only recorded after the Razorpay signature and captured payment details are verified. Payment history contains captured provider transactions; manually changed invoice statuses do not create payment records.
+
 ## 📦 Installation
 
 ```bash
@@ -62,8 +79,13 @@ Create `.env` file:
 
 ```
 PORT=5000
-MONGO_URI=your_mongodb_connection
+MONGO_URL=your_mongodb_connection
 JWT_SECRET=your_secret
+FRONTEND_URL=http://localhost:3000
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=Invoice SaaS <billing@example.com>
 ```
 
 Run:
