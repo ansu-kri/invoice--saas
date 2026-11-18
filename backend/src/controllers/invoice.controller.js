@@ -1,6 +1,6 @@
 const Invoice = require("../models/Invoice");
 const { validationResult } = require("express-validator")
-const PDFDocument = require("pdfkit")
+const { createInvoicePdf } = require("../services/invoice-pdf.service")
 const crypto = require("crypto");
 const razorpay = require("../config/razorpay");
 const {sendInvoiceEmail} = require("../services/email.service");
@@ -465,44 +465,20 @@ exports.downloadInvoice = async (req, res) => {
             isDeleted: false,
         });
 
-        if (!invoice) {
-            return res.status(404).json({ message: "Invoice not found" })
-        }
+        if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
-        const doc = new PDFDocument();
-
-        res.setHeader("content-Type", "application/pdf");
-        res.setHeader(
-            "content-Disposition",
-            `attachment; filename=invoice-${invoice._id}.pdf`
-        );
-
-        doc.pipe(res);
-
-        doc.fontSize(20).text("Invoice", { align: "center" });
-        doc.moveDown();
-
-        doc.fontSize(14).text(`Client: ${invoice.clientName}`);
-        doc.text(`Email: ${invoice.clientEmail}`);
-        doc.text(`Status: ${invoice.status}`);
-        doc.moveDown();
-
-        invoice.items.forEach((item, index) => {
-            doc.text(
-                `${index + 1}. ${item.description} - ${item.quantity} x ${item.price}`
-            );
-        });
-
-        doc.moveDown();
-        doc.fontSize(16).text(`Total: ₹ ${invoice.totalAmount}`);
-
-        doc.end();
-
-    } catch (error) { 
-        res.status(500).json({ message: "PDF generation failed" })
+        const pdf = await createInvoicePdf(invoice);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+        res.setHeader("Content-Disposition", `attachment; filename=invoice-${invoice._id}.pdf`);
+        res.setHeader("Content-Length", pdf.length);
+        return res.status(200).end(pdf);
+    } catch (error) {
+        return res.status(500).json({ message: "PDF generation failed" });
     }
-}
-
+};
 //========== Create Order API===================
 
 exports.createPaymentOrder = async (req, res) => {
@@ -715,11 +691,12 @@ exports.sendInvoiceToClient = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Send invoice error:", err);
+    console.error("Send invoice error:", err.message);
 
-    res.status(500).json({
+    const statusCode = Number.isInteger(err.statusCode) ? err.statusCode : 502;
+    return res.status(statusCode).json({
       success: false,
-      message: "Failed to send invoice email",
+      message: err.message || "Email provider rejected the invoice.",
     });
   }
 };
@@ -766,3 +743,4 @@ exports.reminderService = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+

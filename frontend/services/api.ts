@@ -218,6 +218,7 @@ export const downloadInvoice = async (id: string) => {
 
   const response = await fetch(apiUrl(`/invoices/${encodeURIComponent(id)}/download`), {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => null);

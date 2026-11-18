@@ -1,4 +1,4 @@
-const PDFDocument = require("pdfkit");
+const { createInvoicePdf } = require("./invoice-pdf.service");
 const { Resend } = require("resend");
 
 const escapeHtml = (value = "") =>
@@ -10,46 +10,26 @@ const escapeHtml = (value = "") =>
         "'": "&#39;",
     })[character]);
 
-const createInvoicePdf = (invoice) => new Promise((resolve, reject) => {
-    const doc = new PDFDocument();
-    const chunks = [];
-    doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
-
-    doc.fontSize(22).fillColor("#28324a").text("INVOICE", { align: "center" });
-    doc.moveDown();
-    doc.fontSize(11).fillColor("#4b5568")
-        .text(`Invoice: ${invoice._id.toString().slice(-6).toUpperCase()}`)
-        .text(`Issued: ${new Date(invoice.createdAt || Date.now()).toLocaleDateString()}`)
-        .text(`Due: ${new Date(invoice.dueDate).toLocaleDateString()}`);
-    doc.moveDown();
-    doc.fontSize(14).fillColor("#222").text("Bill to");
-    doc.fontSize(11).text(invoice.clientName);
-    if (invoice.clientEmail) doc.text(invoice.clientEmail);
-    doc.moveDown();
-    invoice.items.forEach((item, index) => {
-        doc.text(`${index + 1}. ${item.description} - ${item.quantity} x INR ${item.price}`);
-    });
-    doc.moveDown();
-    doc.fontSize(15).fillColor("#222").text(`Total: ₹${invoice.totalAmount}`);
-    doc.fontSize(11).text(`Status: ${invoice.status}`);
-    doc.end();
-});
-
 const sendInvoiceEmail = async (invoice) => {
     if (!invoice.clientEmail) {
         throw new Error("The invoice does not have a client email address.");
     }
     if (!process.env.RESEND_API_KEY) {
-        throw new Error("Email delivery is not configured.");
+        const error = new Error("Email delivery is not configured. Set RESEND_API_KEY.");
+        error.statusCode = 503;
+        throw error;
+    }
+    if (!process.env.RESEND_FROM_EMAIL) {
+        const error = new Error("Email sender is not configured. Set RESEND_FROM_EMAIL to an address on a verified Resend domain.");
+        error.statusCode = 503;
+        throw error;
     }
 
     const invoiceId = invoice._id.toString().slice(-6).toUpperCase();
     const pdf = await createInvoicePdf(invoice);
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "Invoice SaaS <onboarding@resend.dev>",
+        from: process.env.RESEND_FROM_EMAIL,
         to: invoice.clientEmail,
         subject: `Invoice ${invoiceId}`,
         html: `
@@ -65,8 +45,12 @@ const sendInvoiceEmail = async (invoice) => {
         }],
     });
     if (error) {
-        throw new Error(error.message || "Email provider rejected the invoice.");
+        const providerError = new Error(error.message || "Email provider rejected the invoice.");
+        const upstreamStatus = Number(error.statusCode || error.status);
+        providerError.statusCode = upstreamStatus >= 400 && upstreamStatus < 600 ? upstreamStatus : 502;
+        throw providerError;
     }
 };
 
 module.exports = { sendInvoiceEmail };
+

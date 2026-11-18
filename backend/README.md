@@ -85,7 +85,8 @@ FRONTEND_URL=http://localhost:3000
 RAZORPAY_KEY_ID=your_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL=Invoice SaaS <billing@example.com>
+RESEND_FROM_EMAIL=Invoice SaaS <billing@your-verified-domain.com>
+INVOICE_CURRENCY_SYMBOL=
 ```
 
 Run:
