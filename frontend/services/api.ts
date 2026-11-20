@@ -106,18 +106,18 @@ export const getInvoices = async (
     page: number;
     totalPages: number;
     invoices: InvoiceRecord[];
-  }>(`/invoices?${query}`);
+  }>(`/api/invoices?${query}`);
 };
 
 export const deleteInvoice = async (id: string) =>
-  authFetch(`/invoices/${encodeURIComponent(id)}`, { method: "DELETE" });
+  authFetch(`/api/invoices/${encodeURIComponent(id)}`, { method: "DELETE" });
 
 export const createInvoice = async (data: {
   clientName: string;
   clientEmail?: string;
   items: { description: string; quantity: number; price: number }[];
 }) =>
-  authFetch<InvoiceRecord>("/invoices", {
+  authFetch<InvoiceRecord>("/api/invoices", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -125,7 +125,7 @@ export const createInvoice = async (data: {
 export const createUser = async (data: UserInput, token: string) => {
   const headers = new Headers({ "Content-Type": "application/json" });
   headers.set("Authorization", `Bearer ${token}`);
-  const response = await fetch(apiUrl("/users/users"), {
+  const response = await fetch(apiUrl("/api/users/users"), {
     method: "POST",
     headers,
     body: JSON.stringify(data),
@@ -144,11 +144,11 @@ export const getUsers = async (page = 1, search = "") => {
     page: number;
     totalPages: number;
     users: UserRecord[];
-  }>(`/users?${query}`);
+  }>(`/api/users?${query}`);
 };
 
 export const deleteUser = async (id: string) =>
-  authFetch(`/users/${encodeURIComponent(id)}`, { method: "DELETE" });
+  authFetch(`/api/users/${encodeURIComponent(id)}`, { method: "DELETE" });
 
 export const getCustomers = async (page = 1, search = "") => {
   const query = new URLSearchParams({ page: String(page), limit: "10", search });
@@ -157,20 +157,20 @@ export const getCustomers = async (page = 1, search = "") => {
     page: number;
     totalPages: number;
     customers: CustomerRecord[];
-  }>(`/customers?${query}`);
+  }>(`/api/customers?${query}`);
 };
 
 export const saveCustomer = async (
   customer: Partial<CustomerRecord> & { name: string },
   id?: string,
 ) =>
-  authFetch<CustomerRecord>(id ? `/customers/${encodeURIComponent(id)}` : "/customers", {
+  authFetch<CustomerRecord>(id ? `/api/customers/${encodeURIComponent(id)}` : "/api/customers", {
     method: id ? "PATCH" : "POST",
     body: JSON.stringify(customer),
   });
 
 export const deleteCustomer = async (id: string) =>
-  authFetch(`/customers/${encodeURIComponent(id)}`, { method: "DELETE" });
+  authFetch(`/api/customers/${encodeURIComponent(id)}`, { method: "DELETE" });
 
 export const getExpenses = async (page = 1, search = "") => {
   const query = new URLSearchParams({ page: String(page), limit: "10", search });
@@ -180,20 +180,20 @@ export const getExpenses = async (page = 1, search = "") => {
     totalPages: number;
     expenses: ExpenseRecord[];
     summary: { totalAmount: number; count: number };
-  }>(`/expenses?${query}`);
+  }>(`/api/expenses?${query}`);
 };
 
 export const saveExpense = async (
   expense: Omit<ExpenseRecord, "_id">,
   id?: string,
 ) =>
-  authFetch<ExpenseRecord>(id ? `/expenses/${encodeURIComponent(id)}` : "/expenses", {
+  authFetch<ExpenseRecord>(id ? `/api/expenses/${encodeURIComponent(id)}` : "/api/expenses", {
     method: id ? "PATCH" : "POST",
     body: JSON.stringify(expense),
   });
 
 export const deleteExpense = async (id: string) =>
-  authFetch(`/expenses/${encodeURIComponent(id)}`, { method: "DELETE" });
+  authFetch(`/api/expenses/${encodeURIComponent(id)}`, { method: "DELETE" });
 
 export const getNotifications = async (page = 1) =>
   authFetch<{
@@ -202,21 +202,21 @@ export const getNotifications = async (page = 1) =>
     page: number;
     totalPages: number;
     notifications: NotificationRecord[];
-  }>(`/notifications?page=${page}&limit=20`);
+  }>(`/api/notifications?page=${page}&limit=20`);
 
 export const markNotificationRead = async (id: string) =>
-  authFetch<NotificationRecord>(`/notifications/${encodeURIComponent(id)}/read`, {
+  authFetch<NotificationRecord>(`/api/notifications/${encodeURIComponent(id)}/read`, {
     method: "PATCH",
   });
 
 export const markAllNotificationsRead = async () =>
-  authFetch<{ updated: number }>("/notifications/read-all", { method: "PATCH" });
+  authFetch<{ updated: number }>("/api/notifications/read-all", { method: "PATCH" });
 
 export const downloadInvoice = async (id: string) => {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("Your session has expired. Please sign in again.");
 
-  const response = await fetch(apiUrl(`/invoices/${encodeURIComponent(id)}/download`), {
+  const response = await fetch(apiUrl(`/api/invoices/${encodeURIComponent(id)}/download`), {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -237,6 +237,6 @@ export const downloadInvoice = async (id: string) => {
 };
 
 export const sendInvoiceToClientWithPdf = async (id: string) =>
-  authFetch(`/invoices/${encodeURIComponent(id)}/send-email`, {
+  authFetch(`/api/invoices/${encodeURIComponent(id)}/send-email`, {
     method: "POST",
   });

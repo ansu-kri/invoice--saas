@@ -124,7 +124,7 @@ export default function DashboardPage() {
       }
       const query = new URLSearchParams({ from: dates.from, to: dates.to });
       const result = await authFetch<Partial<DashboardStats>>(
-        `/invoices/dashboard/stats?${query}`,
+        `/api/invoices/dashboard/stats?${query}`,
       );
       setStats({
         ...result,

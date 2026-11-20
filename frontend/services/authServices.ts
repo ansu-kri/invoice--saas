@@ -21,7 +21,7 @@ export const registerUser = async (data: {
   password: string;
   organizationName: string;
 }) => {
-  return postAuth("/auth/register", data);
+  return postAuth("/api/auth/register", data);
 };
 
 //================login User and Admin=====================
@@ -29,5 +29,5 @@ export const loginUser = async ( data: {
   email: string;
   password: string;
 }) => {
-  return postAuth("/auth/login", data);
+  return postAuth("/api/auth/login", data);
 };

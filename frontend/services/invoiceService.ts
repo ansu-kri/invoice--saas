@@ -41,7 +41,7 @@ export const handlePayment = async (invoice: PayableInvoice): Promise<void> => {
   if (!window.Razorpay) throw new Error("The secure payment window is not available. Please try again.");
 
   const order = await authFetch<{ id: string; amount: number; currency: string }>(
-    `/invoices/${encodeURIComponent(invoice._id)}/create-order`,
+    `/api/invoices/${encodeURIComponent(invoice._id)}/create-order`,
     { method: "POST", body: JSON.stringify({}) },
   );
 
@@ -61,7 +61,7 @@ export const handlePayment = async (invoice: PayableInvoice): Promise<void> => {
       modal: { ondismiss: () => reject(new Error("Payment window was closed.")) },
       handler: async (response) => {
         try {
-          const result = await authFetch<{ status: string }>("/invoices/verify-payment", {
+          const result = await authFetch<{ status: string }>("/api/invoices/verify-payment", {
             method: "POST",
             body: JSON.stringify({ invoiceId: invoice._id, ...response }),
           });
